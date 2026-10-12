@@ -21,19 +21,19 @@ git commit -m "変更内容"
 git push                      # 作業終了時に共有
 ```
 
-## 自動プッシュ(30分ごと)
+## ワンコマンドで保存&共有(commit → pull → push)
 
-変更があれば自動で `commit → pull --rebase → push` します。競合や認証失敗の場合は何も壊さず中断し、`.git/auto-push.log` に記録します。
+定期実行はしません。必要な時に手動で実行します(Claude Code に「プッシュして」と頼んでもOK)。
 
-| OS | 登録 | 解除 |
-|---|---|---|
-| Mac | `tools/auto-push/install-mac.sh` | `tools/auto-push/install-mac.sh uninstall` |
-| Windows | `.\tools\auto-push\install-windows.ps1` | `.\tools\auto-push\install-windows.ps1 -Uninstall` |
+| OS | コマンド |
+|---|---|
+| Mac | `bash tools/auto-push/auto-push.sh` |
+| Windows | `powershell -File .\tools\auto-push\auto-push.ps1` |
 
+- 変更を全部 `commit` し、`pull --rebase` で最新を取り込んでから `push` します
+- 競合や認証失敗の場合は何も壊さず中断し、`.git/auto-push.log` に記録します
+- 95MB を超えるファイルは自動でコミット対象から外れます(GitHub の 100MB 制限対策)
 - 事前に GitHub の認証(Mac: `gh auth login`、Windows: 初回 push 時の Git Credential Manager)を済ませておくこと
-- 95MB を超えるファイルは自動でコミット対象から外れる(GitHub の 100MB 制限対策)
-- 競合でログに `pull --rebase failed` が出たら、手動で `git pull` して解消する
-- Unity で編集中の状態もコミットされるため、履歴は `auto:` コミットが多くなる
 
 ## 運用ルール
 
