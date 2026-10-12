@@ -1,0 +1,30 @@
+# Mac / Windows 間で改行コードを統一する
+* text=auto
+
+# Unity のシーン・プレハブ等は YAML。マージしやすいよう UnityYAMLMerge を使う場合は
+# Git の設定側で mergetool を登録すること(下記は属性のみ)
+*.unity   merge=unityyamlmerge eol=lf
+*.prefab  merge=unityyamlmerge eol=lf
+*.asset   merge=unityyamlmerge eol=lf
+*.meta    eol=lf
+*.mat     merge=unityyamlmerge eol=lf
+*.anim    merge=unityyamlmerge eol=lf
+*.controller merge=unityyamlmerge eol=lf
+
+# ソースコード
+*.cs   text eol=lf diff=csharp
+*.md   text eol=lf
+*.json text eol=lf
+*.shader text eol=lf
+
+# バイナリ
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.psd  binary
+*.fbx  binary
+*.wav  binary
+*.mp3  binary
+*.ogg  binary
+*.mp4  binary
