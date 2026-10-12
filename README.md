@@ -9,7 +9,12 @@ git clone https://github.com/eitag0128/game-seminar-team7.git
 cd game-seminar-team7
 ```
 
-Unity Hub から、このフォルダ(Unity プロジェクトのルート)を開いてください。
+Unity Hub の **Add → Add project from disk** で、このフォルダ(Unity プロジェクトのルート)を開いてください。
+
+- Unity バージョン: **6000.3.10f1**(Unity Hub で同じバージョンをインストールすること)
+- テンプレート: 3D (URP / Universal 3D)
+- 初回起動時は `Library/` の生成とパッケージ解決で数分かかります
+- Apple Silicon の Mac で Intel 版エディタを入れた場合は Rosetta 2 が必要です。可能なら Silicon 版を入れてください
 
 ## 日々の作業の流れ
 
