@@ -1,0 +1,270 @@
+import * as THREE from 'three';
+import { DEMO } from './config.ts';
+import type { GameState } from './progression.ts';
+
+/** TEMP art: simple geometry and generated shop signs, no supplied concept art. */
+export class Street {
+  readonly renderer: THREE.WebGLRenderer;
+  private scene = new THREE.Scene();
+  private camera = new THREE.OrthographicCamera();
+  private girl = new THREE.Group();
+  private legs: THREE.Mesh[] = [];
+  private tiles: THREE.Group[] = [];
+  private machinePanels: THREE.Mesh[] = [];
+  private gaps: THREE.Mesh[] = [];
+  private lamps: THREE.Mesh[] = [];
+  private rain: THREE.LineSegments;
+  private rainPositions: Float32Array;
+  private width = 1;
+  private height = 1;
+  private materials = new Map<string, THREE.MeshBasicMaterial>();
+  private geometries = new Set<THREE.BufferGeometry>();
+  private textures: THREE.Texture[] = [];
+  private resizeObserver: ResizeObserver;
+  private contextLost: (event: Event) => void;
+
+  constructor(private host: HTMLElement, onContextLost: () => void) {
+    this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    this.renderer.setClearColor('#0b142c');
+    this.renderer.domElement.setAttribute('aria-label', '雨の夜の商店街と少女');
+    host.prepend(this.renderer.domElement);
+    this.camera.position.z = 30;
+    this.camera.near = 0.1;
+    this.camera.far = 100;
+    for (const offset of [-DEMO.streetLength, 0, DEMO.streetLength]) {
+      const tile = this.makeStreet();
+      tile.position.x = offset;
+      this.scene.add(tile);
+      this.tiles.push(tile);
+    }
+    // The next area deliberately stays quiet and simple for this one-puzzle demo.
+    this.rect(this.scene, 33, -4.8, 70, 4, '#111f36', 0.1);
+    this.rect(this.scene, 26, -2.8, 18, 0.12, '#77969c', 0.2, 0.4);
+    this.label(this.scene, 'この先へ', 23, -1.3, 2, '#adc6ca', 1);
+    this.makeGirl();
+    this.scene.add(this.girl);
+    this.rainPositions = new Float32Array(DEMO.rainCount * 6);
+    for (let i = 0; i < DEMO.rainCount; i++) {
+      this.rainPositions[i * 6] = (this.random(i + 9) - 0.5) * 70;
+      this.rainPositions[i * 6 + 1] = this.random(i + 13) * 18 - 8;
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(this.rainPositions, 3));
+    this.geometries.add(geometry);
+    this.rain = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({ color: '#6a9cb8', transparent: true, opacity: 0.25 }));
+    this.scene.add(this.rain);
+    this.resizeObserver = new ResizeObserver(() => this.resize());
+    this.resizeObserver.observe(host);
+    this.contextLost = (event) => { event.preventDefault(); onContextLost(); };
+    this.renderer.domElement.addEventListener('webglcontextlost', this.contextLost);
+    this.resize();
+  }
+
+  private random(n: number): number {
+    const value = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+    return value - Math.floor(value);
+  }
+
+  private material(color: string, opacity: number): THREE.MeshBasicMaterial {
+    const key = `${color}/${opacity}`;
+    let material = this.materials.get(key);
+    if (!material) {
+      material = new THREE.MeshBasicMaterial({ color, transparent: opacity < 1, opacity, depthWrite: opacity === 1 });
+      this.materials.set(key, material);
+    }
+    return material;
+  }
+
+  private rect(parent: THREE.Object3D, x: number, y: number, w: number, h: number, color: string, z: number, opacity = 1): THREE.Mesh {
+    const geometry = new THREE.PlaneGeometry(w, h);
+    this.geometries.add(geometry);
+    const mesh = new THREE.Mesh(geometry, this.material(color, opacity));
+    mesh.position.set(x, y, z);
+    parent.add(mesh);
+    return mesh;
+  }
+
+  private circle(parent: THREE.Object3D, x: number, y: number, radius: number, color: string, z: number, opacity = 1): THREE.Mesh {
+    const geometry = new THREE.CircleGeometry(radius, 24);
+    this.geometries.add(geometry);
+    const mesh = new THREE.Mesh(geometry, this.material(color, opacity));
+    mesh.position.set(x, y, z);
+    parent.add(mesh);
+    return mesh;
+  }
+
+  private label(parent: THREE.Object3D, text: string, x: number, y: number, width: number, color: string, z: number): void {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512; canvas.height = 96;
+    const context = canvas.getContext('2d')!;
+    context.fillStyle = color;
+    context.font = '38px "Yu Mincho", "Hiragino Mincho ProN", serif';
+    context.textAlign = 'center'; context.textBaseline = 'middle';
+    context.fillText(text, 256, 48);
+    const texture = new THREE.CanvasTexture(canvas);
+    this.textures.push(texture);
+    const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false });
+    const geometry = new THREE.PlaneGeometry(width, width * 96 / 512);
+    this.geometries.add(geometry);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y, z); parent.add(mesh);
+  }
+
+  private makeStreet(): THREE.Group {
+    const root = new THREE.Group();
+    this.rect(root, 0, 3, 36, 10, '#101d36', 0);
+    for (let i = 0; i < 14; i++) {
+      const x = -17 + i * 2.65;
+      const h = 3 + this.random(i) * 5;
+      this.rect(root, x, 2.5 + h / 2, 2.3, h, '#152440', 0.3);
+      for (let j = 0; j < 5; j++) {
+        this.rect(root, x - 0.55, 3 + j * 0.85, 0.28, 0.38, '#537c91', 0.4, this.random(i * 9 + j) > 0.6 ? 0.4 : 0.1);
+      }
+    }
+    this.rect(root, 0, -4.5, 36, 4, '#14263d', 1);
+    this.rect(root, 0, -2.9, 36, 0.17, '#45627a', 2);
+    this.rect(root, 0, -3.08, 36, 0.12, '#0b162b', 2.1);
+    const shops = [
+      { x: -15, w: 4.5, h: 5.8, sign: '喫茶  月灯', color: '#7c9a9a' },
+      { x: -9.8, w: 5.5, h: 7.8, sign: 'あおい商店', color: '#759bad' },
+      { x: -3.8, w: 5.9, h: 6.3, sign: '古書  雨音', color: '#6b91ac' },
+      { x: 4.4, w: 6.8, h: 7.4, sign: 'ひかり写真館', color: '#8c8eaa' },
+      { x: 12.5, w: 8, h: 6.4, sign: '夜 凪 商 店 街', color: '#6d8a9c' },
+    ];
+    for (const [index, shop] of shops.entries()) {
+      this.rect(root, shop.x, shop.h / 2 - 2.8, shop.w, shop.h, index % 2 ? '#1b3049' : '#1c2d47', 2);
+      this.rect(root, shop.x, 0, shop.w - 0.25, 3.5, '#101f34', 2.2);
+      this.rect(root, shop.x, 1.5, shop.w - 0.25, 0.7, '#263f58', 2.3);
+      this.label(root, shop.sign, shop.x, 1.5, shop.w - 0.7, shop.color, 2.5);
+      this.rect(root, shop.x, 0.94, shop.w + 0.1, 0.22, '#42637c', 2.4);
+      this.rect(root, shop.x, -0.95, shop.w - 0.7, 3.1, '#23354c', 2.3);
+      for (let row = 0; row < 15; row++) {
+        this.rect(root, shop.x, -2.35 + row * 0.2, shop.w - 0.7, 0.025, '#44556c', 2.4, 0.45);
+      }
+      for (const dx of [-shop.w / 3, shop.w / 3]) {
+        this.rect(root, shop.x + dx, 3.3, 0.95, 1.25, '#101f33', 2.3);
+        this.rect(root, shop.x + dx, 3.3, 0.75, 1.02, '#88b9c6', 2.4, index === 1 ? 0.22 : 0.06);
+      }
+    }
+    for (const x of [-12, 8]) {
+      this.rect(root, x, -0.2, 0.09, 5.5, '#536a7b', 3);
+      this.rect(root, x + 0.36, 2.5, 0.8, 0.12, '#9dc3c8', 3.2);
+      const glow = this.circle(root, x + 0.3, 1.8, 1.8, '#64a2bf', 3.1, 0.045);
+      glow.scale.set(0.65, 1.5, 1);
+      this.rect(root, x + 0.2, -4.4, 0.7, 1.7, '#82b8c5', 3.2, 0.08);
+    }
+    for (let i = 0; i < 28; i++) {
+      this.rect(root, -17 + this.random(i + 30) * 34, -3.4 - this.random(i + 70) * 2.6,
+        0.3 + this.random(i + 50) * 2.5, 0.015 + this.random(i + 11) * 0.06, '#8ab5c6', 3.5, 0.13);
+    }
+    this.label(root, '夜凪', -15.7, 4, 1.4, '#526e87', 3);
+    this.machine(root);
+    return root;
+  }
+
+  private machine(root: THREE.Group): void {
+    const x = DEMO.machineX;
+    this.rect(root, x, -1.35, 1.55, 2.95, '#0a1529', 4);
+    const panel = this.rect(root, x, -1.3, 1.42, 2.8, '#668eaa', 4.1);
+    this.machinePanels.push(panel);
+    this.rect(root, x, -0.92, 1.17, 1.55, '#b8d9dd', 4.2);
+    for (let i = 0; i < 4; i++) {
+      const dx = x - 0.43 + i * 0.28;
+      this.rect(root, dx, -0.67, 0.15, 0.5, DEMO.drinks[i].color, 4.3);
+      this.rect(root, dx, -0.4, 0.16, 0.06, '#dfedef', 4.4);
+      this.rect(root, dx, -1.25, 0.14, 0.05, '#8fb5be', 4.4);
+    }
+    this.rect(root, x, -2.2, 0.65, 0.25, '#12263c', 4.3);
+    const gap = this.rect(root, x + 0.3, -1.6, 0.67, 0.95, '#d2d8d9', 4.5);
+    gap.rotation.z = -0.04; this.gaps.push(gap);
+    this.rect(root, x, -3.7, 1.25, 1.3, '#8bc7d1', 3.6, 0.12);
+    this.lamps.push(this.circle(root, x, -1, 2.5, '#8ecedc', 3.7, 0.06));
+  }
+
+  private makeGirl(): void {
+    this.circle(this.girl, 0, -0.02, 0.38, '#060e20', 6, 0.45).scale.y = 0.2;
+    for (const x of [-0.11, 0.11]) {
+      this.legs.push(this.rect(this.girl, x, 0.25, 0.11, 0.47, '#19283c', 7));
+      this.rect(this.girl, x + 0.025, 0.03, 0.19, 0.09, '#0d1628', 7.2);
+    }
+    const ponchoShape = new THREE.Shape();
+    ponchoShape.moveTo(-0.18, 1.17); ponchoShape.lineTo(0.18, 1.17);
+    ponchoShape.lineTo(0.38, 0.45); ponchoShape.lineTo(-0.38, 0.45); ponchoShape.closePath();
+    const geometry = new THREE.ShapeGeometry(ponchoShape); this.geometries.add(geometry);
+    const poncho = new THREE.Mesh(geometry, this.material('#c5aa6c', 1));
+    poncho.position.z = 7.5; this.girl.add(poncho);
+    this.rect(this.girl, -0.22, 0.8, 0.07, 0.45, '#e0cb91', 7.6);
+    this.circle(this.girl, 0, 1.32, 0.24, '#162236', 7.6);
+    this.rect(this.girl, 0.09, 1.27, 0.2, 0.29, '#cfb9a3', 7.7);
+    this.rect(this.girl, -0.08, 1.35, 0.22, 0.29, '#152033', 7.8);
+    this.rect(this.girl, 0.32, 1.42, 0.025, 1.35, '#9fbdc4', 7.3);
+    const canopy = this.circle(this.girl, 0.22, 1.92, 0.82, '#7ba2b5', 7.9, 0.55);
+    canopy.scale.y = 0.44;
+    this.rect(this.girl, 0.22, 1.86, 1.63, 0.025, '#b4cdd1', 8, 0.7);
+    this.girl.position.y = -2.78;
+  }
+
+  private resize(): void {
+    this.width = Math.max(1, this.host.clientWidth);
+    this.height = Math.max(1, this.host.clientHeight);
+    const halfHeight = DEMO.viewHeight / 2;
+    const halfWidth = halfHeight * this.width / this.height;
+    this.camera.left = -halfWidth; this.camera.right = halfWidth;
+    this.camera.top = halfHeight; this.camera.bottom = -halfHeight;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(this.width, this.height);
+  }
+
+  render(state: GameState, time: number, dt: number): { x: number; y: number; scale: number } {
+    this.camera.position.x = state.x;
+    this.girl.position.x = state.x;
+    this.girl.scale.x = state.facing;
+    const stride = state.moving ? Math.sin(time * 13) * 0.075 : 0;
+    this.legs[0].position.x = -0.11 + stride;
+    this.legs[1].position.x = 0.11 - stride;
+    this.girl.position.y = -2.78 + (state.moving ? Math.abs(Math.sin(time * 13)) * 0.025 : 0);
+    this.gaps.forEach((gap) => { gap.visible = !state.repaired; });
+    this.machinePanels.forEach((panel) => { panel.material = this.material(state.repaired ? '#7ba7b5' : '#668eaa', 1); });
+    this.lamps.forEach((lamp) => { lamp.scale.setScalar(1 + Math.sin(time * 1.5) * 0.02); });
+    // After repair, only the original street remains. Its right-hand exit leads onward.
+    this.tiles.forEach((tile, index) => { tile.visible = !state.repaired || index === 1; });
+    for (let i = 0; i < DEMO.rainCount; i++) {
+      const p = i * 6;
+      this.rainPositions[p] -= dt * 1.4;
+      this.rainPositions[p + 1] -= dt * (7 + this.random(i) * 4);
+      if (this.rainPositions[p + 1] < -7) this.rainPositions[p + 1] = 8;
+      if (this.rainPositions[p] < -35) this.rainPositions[p] = 35;
+      this.rainPositions[p + 2] = 12;
+      this.rainPositions[p + 3] = this.rainPositions[p] + 0.045;
+      this.rainPositions[p + 4] = this.rainPositions[p + 1] + 0.25;
+      this.rainPositions[p + 5] = 12;
+    }
+    this.rain.position.x = state.x;
+    this.rain.geometry.attributes.position.needsUpdate = true;
+    this.camera.updateMatrixWorld();
+    this.renderer.render(this.scene, this.camera);
+    let machineX = DEMO.machineX;
+    if (!state.repaired) machineX += Math.round((state.x - machineX) / DEMO.streetLength) * DEMO.streetLength;
+    const point = new THREE.Vector3(machineX, -1.3, 5).project(this.camera);
+    return { x: (point.x + 1) * this.width / 2, y: (1 - point.y) * this.height / 2, scale: this.height / DEMO.viewHeight };
+  }
+
+  dispose(): void {
+    this.resizeObserver.disconnect();
+    this.renderer.domElement.removeEventListener('webglcontextlost', this.contextLost);
+    this.geometries.forEach((geometry) => geometry.dispose());
+    const materials = new Set<THREE.Material>();
+    this.scene.traverse((node) => {
+      if ('material' in node) {
+        const value = node.material as THREE.Material | THREE.Material[];
+        (Array.isArray(value) ? value : [value]).forEach((material) => materials.add(material));
+      }
+    });
+    this.materials.forEach((material) => materials.add(material));
+    materials.forEach((material) => material.dispose());
+    this.textures.forEach((texture) => texture.dispose());
+    this.renderer.dispose();
+    this.renderer.domElement.remove();
+  }
+}

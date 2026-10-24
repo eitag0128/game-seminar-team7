@@ -1,0 +1,79 @@
+import { test, expect } from '@playwright/test';
+import type { Page } from '@playwright/test';
+
+async function walkToMachine(page: Page): Promise<void> {
+  await page.keyboard.down('ArrowRight');
+  await expect.poll(() => page.locator('#machine').isEnabled(), { intervals: [50] }).toBe(true);
+  await page.keyboard.up('ArrowRight');
+  await expect(page.getByRole('button', { name: '自販機を調べる' })).toBeEnabled();
+}
+
+test('normal play: loop, inspect mirror, wrong choice, repair, fragment, exit and replay', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+  await page.goto('/');
+  await expect(page.locator('#street canvas')).toBeVisible();
+  await expect(page.locator('#error')).toBeHidden();
+  await page.screenshot({ path: 'test-results/street-initial.png' });
+
+  // Real keyboard movement crosses a whole street before opening the puzzle.
+  await page.keyboard.down('ArrowRight');
+  await expect(page.locator('#app')).toHaveAttribute('data-loops', '1', { timeout: 25000 });
+  await page.keyboard.up('ArrowRight');
+  await expect(page.locator('#app')).toHaveAttribute('data-fragments', '0');
+  await walkToMachine(page);
+  await page.getByRole('button', { name: '自販機を調べる' }).click();
+  await expect(page.getByRole('dialog', { name: '自動販売機' })).toBeVisible();
+  const x = await page.locator('#app').getAttribute('data-x');
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('#app')).toHaveAttribute('data-x', x!);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#puzzle')).toBeHidden();
+  await page.getByRole('button', { name: '自販機を調べる' }).click();
+  await page.getByRole('button', { name: 'ソーダのスイッチ', exact: true }).click();
+  await expect(page.locator('#app')).toHaveAttribute('data-phase', 'puzzle');
+  await expect(page.locator('#app')).toHaveAttribute('data-fragments', '0');
+  await page.screenshot({ path: 'test-results/mirror-puzzle.png' });
+  await page.getByRole('button', { name: 'ジュースのスイッチ', exact: true }).click();
+  await expect(page.locator('#memory')).toBeVisible();
+  await expect(page.locator('#app')).toHaveAttribute('data-repaired', 'true');
+  await expect(page.locator('#app')).toHaveAttribute('data-fragments', '1');
+  await page.screenshot({ path: 'test-results/memory-fragment.png' });
+  await page.getByRole('button', { name: '街へ戻る' }).click();
+  await expect(page.locator('#machine')).toBeHidden();
+  await page.screenshot({ path: 'test-results/street-repaired.png' });
+  await page.keyboard.down('KeyD');
+  await expect(page.locator('#app')).toHaveAttribute('data-phase', 'ending', { timeout: 25000 });
+  await page.keyboard.up('KeyD');
+  await expect(page.locator('#app')).toHaveAttribute('data-loops', '1');
+  await expect(page.locator('#app')).toHaveAttribute('data-fragments', '1');
+  await page.screenshot({ path: 'test-results/next-area.png' });
+  await page.getByRole('button', { name: 'もう一度歩く' }).click();
+  await expect(page.locator('#app')).toHaveAttribute('data-phase', 'street');
+  await expect(page.locator('#app')).toHaveAttribute('data-repaired', 'false');
+  expect(errors).toEqual([]);
+});
+
+test('left wrap, A/D controls, focus loss and compact desktop layout', async ({ page }) => {
+  await page.setViewportSize({ width: 800, height: 600 });
+  await page.goto('/');
+  await page.keyboard.down('KeyA');
+  await expect(page.locator('#app')).toHaveAttribute('data-loops', '1', { timeout: 20000 });
+  await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+  const x = await page.locator('#app').getAttribute('data-x');
+  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+  await expect(page.locator('#app')).toHaveAttribute('data-x', x!);
+  await page.keyboard.up('KeyA');
+  await page.keyboard.down('ArrowLeft');
+  await expect.poll(() => page.locator('#machine').isEnabled(), { intervals: [50] }).toBe(true);
+  await page.keyboard.up('ArrowLeft');
+  await page.getByRole('button', { name: '自販機を調べる' }).click();
+  await expect(page.locator('#puzzle')).toBeVisible();
+  const box = await page.locator('#puzzle').boundingBox();
+  expect(box!.width).toBeLessThanOrEqual(800);
+  expect(box!.height).toBeLessThanOrEqual(600);
+  await page.screenshot({ path: 'test-results/compact-puzzle.png' });
+  await page.getByRole('button', { name: 'パズルを閉じる' }).click();
+  await expect(page.locator('#app')).toHaveAttribute('data-phase', 'street');
+});
