@@ -28,7 +28,9 @@ git push                      # 作業終了時に共有
 
 ## ワンコマンドで保存&共有(commit → pull → push)
 
-定期実行はしません。必要な時に手動で実行します(Claude Code に「プッシュして」と頼んでもOK)。
+AI 担当は [AGENTS.md](AGENTS.md) に従い、依頼された作業の検証を終えた区切りで commit・push します。毎回のプッシュ指示は不要です。定期実行・常駐監視は設定しません。
+
+以下は手動共有用の既存スクリプトです。全変更を追加するため、他者の未完了変更がないことと共有対象を確認してから使ってください。
 
 | OS | コマンド |
 |---|---|
@@ -42,7 +44,7 @@ git push                      # 作業終了時に共有
 
 ## 運用ルール
 
-- 作業開始前に必ず `git pull`、終わったら `git push`
+- 作業開始前に Git の状態とリモート更新を確認し、作業ツリーがクリーンで履歴が分岐していない時だけ `git pull --ff-only`。検証を終えた区切りで自分の変更を commit・push する
 - 同じシーン / プレハブを同時に編集しない(YAML のマージ衝突を避けるため)
 - Unity の **Edit > Project Settings > Editor** で
   - Version Control Mode: **Visible Meta Files**
