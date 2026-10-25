@@ -169,7 +169,7 @@ function update(next: GameState): void {
     loopFlash.classList.add('flash');
   }
   if (sound.lastCue) app.dataset.lastSound = sound.lastCue;
-  if (before.phase === 'memory' && state.phase === 'street') whisper('→ / D で右へ進めます。', 7000);
+  if (before.phase === 'memory' && state.phase === 'street') whisper('右の道が通れるようになった。', 7000);
   if (before.phase !== 'beyond' && state.phase === 'beyond') whisper('今度は元の場所に戻されなかった。', 7000);
 }
 

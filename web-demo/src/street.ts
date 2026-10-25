@@ -107,7 +107,7 @@ export class Street {
     const draw = (value: string) => {
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.fillStyle = color;
-      context.font = '38px "Yu Mincho", "Hiragino Mincho ProN", serif';
+      context.font = 'bold 36px "Yu Gothic UI", "Yu Gothic", "Hiragino Sans", "Noto Sans JP", Meiryo, sans-serif';
       context.textAlign = 'center'; context.textBaseline = 'middle';
       context.fillText(value, 256, 48);
       texture.needsUpdate = true;
