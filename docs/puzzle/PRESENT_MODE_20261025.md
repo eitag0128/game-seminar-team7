@@ -43,3 +43,12 @@ PM回答の進行（誤答無反応、正解で修復＋断片＋ループ解除
 `npm ci` → `npm run dev` → URLを開く、という手順をやめ、リポジトリ直下の `play/Puzzle_発表モード.html`（説明を減らした版）と `play/Puzzle_説明あり.html` をダブルクリックするだけで遊べるようにした。JS と CSS をHTML1ファイルに埋め込んでいるため、Node.js・サーバー・ネット接続は不要。生成は `web-demo` で `npm run play`。
 
 検証: Playwright Chromium で2つのファイルを `file://` で直接開き、発表モードは開始・音の開始・自販機・正解まで、説明ありは「遊び方」の表示を確認（2件成功）。既存の試験と合わせて単体7件・ブラウザ5件成功。実際のダブルクリック（既定ブラウザ）と Mac・Safari は未確認。
+
+## 追記：GitHub Pages で公開（2026-10-25）
+
+本人の依頼: 「githubでクラウドで実行するやつ…それやってほしい」。`.github/workflows/pages.yml` で、main への push（`web-demo/` かワークフローの変更）ごとに GitHub 上で `npm ci`・`npm test`・`npm run build` を行い、GitHub Pages に公開する。Pages の有効化（Settings → Pages → Source: GitHub Actions）は本人が設定した。リポジトリはもともと公開設定。
+
+- 発表モード: https://eitag0128.github.io/game-seminar-team7/?mode=present
+- 説明あり: https://eitag0128.github.io/game-seminar-team7/
+
+検証: Actions 実行 40192603931 成功。公開URLを Playwright Chromium で開き、発表モードで開始・音の開始・自販機・正解（断片取得）まで、説明ありで「遊び方」の表示を確認した。教室のPC・Mac・Safari での表示は未確認。
