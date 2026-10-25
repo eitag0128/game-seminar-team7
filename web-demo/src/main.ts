@@ -51,8 +51,8 @@ app.innerHTML = `
     <button id="continue" class="text-button">街へ戻る <span aria-hidden="true">→</span></button>
   </dialog>
   <dialog id="ending" class="memory-dialog ending" aria-labelledby="ending-title">
-    <h2 id="ending-title">デモはここまでです</h2>
-    <p>遊んでくれてありがとうございました。</p><button id="restart" class="text-button">もう一度遊ぶ <span aria-hidden="true">↺</span></button>
+    <h2 id="ending-title">デモはここまで</h2>
+    <p>この先（次のエリア・ほかのパズル）はまだ作っていません。</p><button id="restart" class="text-button">もう一度遊ぶ <span aria-hidden="true">↺</span></button>
   </dialog>
   <section id="error" class="error" role="alert" hidden><h2>街を表示できませんでした</h2><p>WebGLが使えるPCブラウザで開いてください。</p><button id="reload" class="text-button">再読み込み</button></section>
 `;
@@ -155,10 +155,10 @@ function update(next: GameState): void {
   }
   if (before.phase !== 'puzzle' && state.phase === 'puzzle') {
     sound.play('open');
-    sound.setMuffled(true);
+    sound.setDimmed(true);
   }
   if (before.phase === 'puzzle' && state.phase !== 'puzzle') {
-    sound.setMuffled(false);
+    sound.setDimmed(false);
   }
   if (before.phase !== 'memory' && state.phase === 'memory') sound.play('chime');
   if (state.loops > before.loops) {
