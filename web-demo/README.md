@@ -2,7 +2,16 @@
 
 既存の Team7 リポジトリを使う、Three.js + TypeScript + Vite の独立アプリです。リポジトリ直下の Unity プロジェクトは変更していません。開発場所は `D:/ゲーム制作/ゲーム制作演習/game-seminar-team7/web-demo`。
 
-## いちばん簡単な起動（ダブルクリック）
+## いちばん簡単な起動（URLを開く）
+
+GitHub Pages で公開しています。ブラウザで開くだけです。
+
+- 発表モード: https://eitag0128.github.io/game-seminar-team7/?mode=present
+- 説明あり: https://eitag0128.github.io/game-seminar-team7/
+
+`web-demo/` を変更して main に push すると、`.github/workflows/pages.yml` が試験・ビルドして数分で自動更新します。結果はリポジトリの Actions タブで確認できます。リポジトリは公開設定なので、このURLも誰でも開けます。
+
+## ネットがない時（ダブルクリック）
 
 リポジトリ直下の `play/Puzzle_発表モード.html` か `play/Puzzle_説明あり.html` をダブルクリックすると、既定のブラウザで開いて遊べます。Node.js・`npm`・開発サーバーは不要で、ネット接続も要りません。USBメモリ等でHTMLファイル1つだけ渡しても動きます。
 
@@ -81,7 +90,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-`npm run build` は型検査後に `dist/` を生成します。`npm run preview` でビルドをローカル確認できます。静的配信にも使える相対パス設定ですが、外部への公開・GitHub Pages設定は今回行っていません。
+`npm run build` は型検査後に `dist/` を生成します。`npm run preview` でビルドをローカル確認できます。相対パス設定なので、同じ `dist/` を GitHub Pages でも配信しています（上記）。
 
 ブラウザ試験はPlaywright Chromiumで通常のキー入力とクリックを使います。`test-results/` に画面を保存し、失敗時はtraceも残します。通常は Playwright 管理ブラウザを使用。既存のローカルChromiumを使う必要がある時だけ `PUZZLE_CHROMIUM_PATH` に実行ファイルのパスを渡せます。設定値やパスを他端末へ固定しないでください。
 

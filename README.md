@@ -4,6 +4,13 @@
 
 ## ブラウザデモを遊ぶだけなら
 
+**URLを開くだけ**（GitHub Pages。main に push すると自動で更新）
+
+- 発表モード: https://eitag0128.github.io/game-seminar-team7/?mode=present
+- 説明あり: https://eitag0128.github.io/game-seminar-team7/
+
+ネットがない場所では、次の HTML をダブルクリックしても遊べます。
+
 [`play/`](play/) フォルダの HTML をダブルクリックするだけです。Node.js・コマンド・ネット接続は不要です（Windows / Mac 共通）。
 
 - `Puzzle_発表モード.html`: 授業の発表用。説明を減らした版
