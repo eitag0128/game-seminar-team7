@@ -8,9 +8,6 @@ export const DEMO = {
   nextAreaDistance: 6,
   viewHeight: 13,
   rainCount: 220,
-  // 発表モード（?mode=present）で、パズルを開いてから鏡の違いをかすかに示すまでの秒数。
-  presentHintSeconds: 12,
-  presentMurmurSeconds: 24,
   drinks: [
     { id: 'soda', name: 'ソーダ', color: '#72b9cf', reflectionColor: '#72b9cf' },
     { id: 'tea', name: 'お茶', color: '#c6b877', reflectionColor: '#c6b877' },

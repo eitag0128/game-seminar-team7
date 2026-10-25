@@ -7,12 +7,6 @@ import { Street } from './street.ts';
 import { Sound } from './audio.ts';
 import { loopWhisper } from './loopEcho.ts';
 
-// ?mode=present: 授業の発表用。説明を減らし、仕様書の「雰囲気で分かる」設計を試す。
-// play/Puzzle_発表モード.html は <html data-play-mode="present"> で同じモードになる。
-const presentMode = new URLSearchParams(window.location.search).get('mode') === 'present'
-  || document.documentElement.dataset.playMode === 'present';
-const oddDrink = DEMO.drinks.find((drink) => String(drink.color) !== String(drink.reflectionColor))?.id;
-
 const app = document.querySelector<HTMLElement>('#app')!;
 app.innerHTML = `
   <div id="street" class="street"></div>
@@ -25,15 +19,7 @@ app.innerHTML = `
   <button id="machine" class="machine-target" aria-label="自販機を調べる"><span>クリックして調べる</span></button>
   <p id="thought" class="thought" role="status">ここはどこだろう。</p>
   <p id="next-action" class="next-action" role="status"></p>
-  <footer class="controls"><span><kbd>←</kbd><kbd>→</kbd> / <kbd>A</kbd><kbd>D</kbd> 歩く</span><button id="show-guide" class="help-button">遊び方</button><button id="sound-toggle" class="help-button" aria-pressed="true">音 オン</button><small>7班 · 仮素材デモ${presentMode ? ' · 発表モード' : ''}</small></footer>
-  <dialog id="title" class="title-dialog" aria-labelledby="title-heading">
-    <h2 id="title-heading">Puzzle</h2>
-    <p>7班 プレイ用デモ</p>
-    <div class="start-choices">
-      <button id="start-title" class="text-button">音ありではじめる <span aria-hidden="true">→</span></button>
-      <button id="start-title-silent" class="text-button quiet">音なしではじめる</button>
-    </div>
-  </dialog>
+  <footer class="controls"><span><kbd>←</kbd><kbd>→</kbd> / <kbd>A</kbd><kbd>D</kbd> 歩く</span><button id="show-guide" class="help-button">遊び方</button><button id="sound-toggle" class="help-button" aria-pressed="true">音 オン</button><small>7班 · 仮素材デモ</small></footer>
   <dialog id="guide" class="guide-dialog" aria-labelledby="guide-title">
     <h2 id="guide-title">遊び方</h2>
     <p class="guide-goal">自販機のパズルを解くと、同じ道をくり返す街から先へ進めます。</p>
@@ -57,7 +43,6 @@ app.innerHTML = `
       <section class="cabinet reflection" aria-label="鏡に映った飲料"><p class="cabinet-label">鏡</p><div id="mirror-drinks" class="drink-row"></div><div class="dispense"></div></section>
     </div>
     <p class="puzzle-whisper">缶の下の丸いボタンで選びます · 違っていたら別の飲み物を試せます · × / Esc で街に戻る</p>
-    <p id="puzzle-murmur" class="puzzle-murmur" hidden>鏡の中に、色が違う缶が1本ある。</p>
   </dialog>
   <dialog id="memory" class="memory-dialog" aria-labelledby="memory-title">
     <div class="memory-shard" aria-hidden="true">◇</div><p class="eyebrow">記憶の断片 1 / 1</p>
@@ -85,10 +70,8 @@ const inventory = document.querySelector<HTMLElement>('#inventory-count')!;
 const fragment = document.querySelector<HTMLElement>('#fragment')!;
 const error = document.querySelector<HTMLElement>('#error')!;
 const realDrinks = document.querySelector<HTMLElement>('#real-drinks')!;
-const title = document.querySelector<HTMLDialogElement>('#title')!;
 const loopFlash = document.querySelector<HTMLElement>('#loop-flash')!;
 const soundToggle = document.querySelector<HTMLButtonElement>('#sound-toggle')!;
-const murmur = document.querySelector<HTMLElement>('#puzzle-murmur')!;
 const mirrorDrinks = document.querySelector<HTMLElement>('#mirror-drinks')!;
 let state = createGame();
 let street: Street | undefined;
@@ -96,10 +79,8 @@ let frame = 0;
 let previousTime = performance.now();
 let thoughtUntil = previousTime + 6000;
 let disposed = false;
-let puzzleOpenedAt = 0;
 let noticedMachine = false;
 const keys = new Set<string>();
-app.dataset.mode = presentMode ? 'present' : 'guided';
 
 function readSoundPreference(): boolean {
   try { return window.localStorage.getItem('puzzle-sound') !== 'off'; } catch { return true; }
@@ -120,20 +101,6 @@ function renderSoundToggle(): void {
 renderSoundToggle();
 app.dataset.sound = 'off';
 soundToggle.addEventListener('click', () => applySound(!sound.enabled));
-if (presentMode) {
-  document.querySelector('#memory-text')!.textContent = '自販機が元に戻った。';
-}
-
-function overlayOpen(): boolean { return guide.open || title.open; }
-function hideTitle(withSound: boolean): void {
-  keys.clear();
-  title.close();
-  applySound(withSound);
-  whisper('ここはどこだろう。', 6000);
-}
-document.querySelector('#start-title')!.addEventListener('click', () => hideTitle(true));
-document.querySelector('#start-title-silent')!.addEventListener('click', () => hideTitle(false));
-title.addEventListener('cancel', (event) => { event.preventDefault(); hideTitle(false); });
 
 function showGuide(): void {
   keys.clear();
@@ -162,8 +129,7 @@ guide.addEventListener('cancel', (event) => { event.preventDefault(); hideGuide(
 
 function drinkMarkup(drink: (typeof DEMO.drinks)[number], reflected: boolean): string {
   const color = reflected ? drink.reflectionColor : drink.color;
-  const odd = reflected && drink.id === oddDrink ? ' data-odd' : '';
-  return `<div class="drink" data-drink="${drink.id}"${odd}>
+  return `<div class="drink" data-drink="${drink.id}">
     <div class="can ${reflected ? 'mirrored-can' : ''}" style="--drink-color:${color}"><span class="can-mark">${drink.name}</span></div>
     ${reflected ? '<span class="mirror-switch" aria-hidden="true"></span>' : `<button class="drink-switch" data-choice="${drink.id}" aria-label="${drink.name}のスイッチ"></button>`}
   </div>`;
@@ -188,15 +154,11 @@ function update(next: GameState): void {
     else if (state.phase !== phase && dialog.open) dialog.close();
   }
   if (before.phase !== 'puzzle' && state.phase === 'puzzle') {
-    puzzleOpenedAt = performance.now();
     sound.play('open');
     sound.setMuffled(true);
   }
   if (before.phase === 'puzzle' && state.phase !== 'puzzle') {
     sound.setMuffled(false);
-    puzzle.classList.remove('hinting');
-    murmur.hidden = true;
-    delete app.dataset.hint;
   }
   if (before.phase !== 'memory' && state.phase === 'memory') sound.play('chime');
   if (state.loops > before.loops) {
@@ -207,7 +169,7 @@ function update(next: GameState): void {
     loopFlash.classList.add('flash');
   }
   if (sound.lastCue) app.dataset.lastSound = sound.lastCue;
-  if (before.phase === 'memory' && state.phase === 'street') whisper(presentMode ? '右の道が通れるようになった。' : '→ / D で右へ進めます。', 7000);
+  if (before.phase === 'memory' && state.phase === 'street') whisper('→ / D で右へ進めます。', 7000);
   if (before.phase !== 'beyond' && state.phase === 'beyond') whisper('今度は元の場所に戻されなかった。', 7000);
 }
 
@@ -235,7 +197,7 @@ ending.addEventListener('cancel', (event) => { event.preventDefault(); });
 
 const movementKeys = new Set(['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD']);
 function onKeyDown(event: KeyboardEvent): void {
-  if (movementKeys.has(event.code) && !overlayOpen() && (state.phase === 'street' || state.phase === 'beyond')) {
+  if (movementKeys.has(event.code) && !guide.open && (state.phase === 'street' || state.phase === 'beyond')) {
     event.preventDefault(); keys.add(event.code);
   }
 }
@@ -250,7 +212,6 @@ function fail(): void {
   cancelAnimationFrame(frame);
   keys.clear();
   if (guide.open) guide.close();
-  if (title.open) title.close();
   error.hidden = false;
   machine.hidden = true;
   app.dataset.error = 'webgl';
@@ -261,31 +222,22 @@ function animate(now: number): void {
   const dt = Math.min((now - previousTime) / 1000, 0.05);
   previousTime = now;
   const direction = Number(keys.has('ArrowRight') || keys.has('KeyD')) - Number(keys.has('ArrowLeft') || keys.has('KeyA'));
-  update(move(state, overlayOpen() ? 0 : direction, dt));
+  update(move(state, guide.open ? 0 : direction, dt));
   app.dataset.x = state.x.toFixed(3);
   const location = street.render(state, now / 1000, dt);
   machine.style.left = `${location.x}px`;
   machine.style.top = `${location.y}px`;
   machine.style.width = `${location.scale * 1.7}px`;
   machine.style.height = `${location.scale * 3.1}px`;
-  machine.hidden = state.repaired || state.phase !== 'street' || overlayOpen();
+  machine.hidden = state.repaired || state.phase !== 'street' || guide.open;
   if (!noticedMachine && !state.repaired && nearMachine(state) && state.phase === 'street') {
     noticedMachine = true;
     whisper('この自販機、一部が白く抜けている。', 5000);
   }
-  if (presentMode && state.phase === 'puzzle') {
-    // 不正解には反応しない（PM回答⑤）。時間経過だけで、鏡の違いをかすかに示す。
-    const seconds = (now - puzzleOpenedAt) / 1000;
-    if (seconds >= DEMO.presentHintSeconds && !puzzle.classList.contains('hinting')) {
-      puzzle.classList.add('hinting');
-      app.dataset.hint = '1';
-    }
-    if (seconds >= DEMO.presentMurmurSeconds && murmur.hidden) { murmur.hidden = false; app.dataset.hint = '2'; }
-  }
   machine.disabled = !nearMachine(state);
   machine.classList.toggle('near', nearMachine(state));
   thought.classList.toggle('visible', now < thoughtUntil && state.phase !== 'puzzle');
-  nextAction.hidden = presentMode || overlayOpen() || (state.phase !== 'street' && state.phase !== 'beyond');
+  nextAction.hidden = guide.open || (state.phase !== 'street' && state.phase !== 'beyond');
   const instruction = state.repaired
     ? '→ / D で右端まで歩くと、先へ進めます。'
     : nearMachine(state)
@@ -298,7 +250,7 @@ function animate(now: number): void {
 try {
   street = new Street(document.querySelector<HTMLElement>('#street')!, fail);
   update(state);
-  if (presentMode) title.showModal(); else showGuide();
+  showGuide();
   frame = requestAnimationFrame(animate);
 } catch (cause) {
   console.error('Puzzle renderer initialization failed', cause);

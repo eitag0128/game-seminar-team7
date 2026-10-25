@@ -18,11 +18,5 @@ html = html.replace(/<link rel="stylesheet" crossorigin href="\.\/(assets\/[^"]+
 if (/(src|href)="\.\/assets\//.test(html)) throw new Error('埋め込めなかった assets の参照が残っています');
 
 mkdirSync(out, { recursive: true });
-const files = [
-  ['Puzzle_発表モード.html', 'present'],
-  ['Puzzle_説明あり.html', 'guided'],
-];
-for (const [name, mode] of files) {
-  writeFileSync(join(out, name), html.replace('<html lang="ja">', `<html lang="ja" data-play-mode="${mode}">`));
-  console.log(`play/${name}`);
-}
+writeFileSync(join(out, 'Puzzle.html'), html);
+console.log('play/Puzzle.html');

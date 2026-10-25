@@ -4,17 +4,11 @@
 
 ## ブラウザデモを遊ぶだけなら
 
-**URLを開くだけ**（GitHub Pages。main に push すると自動で更新）
+URLを開くだけです（GitHub Pages。main に push すると自動で更新）。
 
-- 発表モード: https://eitag0128.github.io/game-seminar-team7/?mode=present
-- 説明あり: https://eitag0128.github.io/game-seminar-team7/
+https://eitag0128.github.io/game-seminar-team7/
 
-ネットがない場所では、次の HTML をダブルクリックしても遊べます。
-
-[`play/`](play/) フォルダの HTML をダブルクリックするだけです。Node.js・コマンド・ネット接続は不要です（Windows / Mac 共通）。
-
-- `Puzzle_発表モード.html`: 授業の発表用。説明を減らした版
-- `Puzzle_説明あり.html`: 初見向けの「遊び方」付き
+ネットがない場所では [`play/Puzzle.html`](play/Puzzle.html) をダブルクリックしても遊べます。Node.js・コマンドは不要です（Windows / Mac 共通）。
 
 デモの開発・作り直しは [web-demo/README.md](web-demo/README.md) を参照してください。
 

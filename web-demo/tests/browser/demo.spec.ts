@@ -99,46 +99,26 @@ test('left wrap, A/D controls, focus loss and compact desktop layout', async ({ 
   await expect(page.locator('#app')).toHaveAttribute('data-phase', 'street');
 });
 
-test('present mode: title card, sound, loop echoes, no written answer, time-only hint', async ({ page }) => {
+test('sound and loop echoes: rain starts on request, loops are noticeable, chime on success', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
-  await page.goto('/?mode=present');
-  await expect(page.locator('#app')).toHaveAttribute('data-mode', 'present');
-  await expect(page.getByRole('dialog', { name: 'Puzzle' })).toBeVisible();
-  await expect(page.locator('#guide')).toBeHidden();
-  await page.screenshot({ path: 'test-results/present-title.png' });
+  await page.goto('/');
   await page.getByRole('button', { name: '音ありではじめる' }).click();
   await expect(page.locator('#app')).toHaveAttribute('data-sound', 'on');
-  await expect(page.locator('#next-action')).toBeHidden();
-
   await page.keyboard.down('ArrowRight');
   await expect(page.locator('#app')).toHaveAttribute('data-loops', '1', { timeout: 25000 });
   await page.keyboard.up('ArrowRight');
   await expect(page.locator('#thought')).toHaveText('あれ、さっきの場所に戻ってる。');
   await expect(page.locator('#app')).toHaveAttribute('data-last-sound', 'loop');
-  await page.screenshot({ path: 'test-results/present-loop.png' });
+  await page.screenshot({ path: 'test-results/loop-echo.png' });
   await walkToMachine(page);
   await page.getByRole('button', { name: '自販機を調べる' }).click();
-  await expect(page.locator('#puzzle')).toBeVisible();
   await expect(page.locator('#app')).toHaveAttribute('data-last-sound', 'open');
-  await expect(page.locator('.puzzle-instruction')).toBeHidden();
-  await expect(page.locator('.puzzle-whisper')).toBeHidden();
-  // A wrong switch still does nothing; the hint only arrives with time.
-  await page.getByRole('button', { name: 'ソーダのスイッチ', exact: true }).click();
-  await expect(page.locator('#app')).toHaveAttribute('data-phase', 'puzzle');
-  await expect(page.locator('#app')).not.toHaveAttribute('data-hint', /./);
-  await expect(page.locator('#app')).toHaveAttribute('data-hint', '1', { timeout: 20000 });
-  await expect(page.locator('.reflection .drink[data-odd]')).toHaveAttribute('data-drink', 'juice');
-  await page.screenshot({ path: 'test-results/present-hint.png' });
-  await expect(page.locator('#puzzle-murmur')).toBeVisible({ timeout: 20000 });
   await page.getByRole('button', { name: 'ジュースのスイッチ', exact: true }).click();
   await expect(page.locator('#memory')).toBeVisible();
   await expect(page.locator('#app')).toHaveAttribute('data-last-sound', 'chime');
-  await expect(page.locator('#memory-text')).not.toContainText('→ / D');
   await page.getByRole('button', { name: '街へ戻る' }).click();
-  await expect(page.locator('#thought')).toHaveText('右の道が通れるようになった。');
-
   await page.getByRole('button', { name: '音 オン' }).click();
   await expect(page.getByRole('button', { name: '音 オフ' })).toHaveAttribute('aria-pressed', 'false');
   await expect(page.locator('#app')).toHaveAttribute('data-sound', 'off');
@@ -146,7 +126,7 @@ test('present mode: title card, sound, loop echoes, no written answer, time-only
 });
 
 test('silent start: the whole demo is playable with sound off', async ({ page }) => {
-  await page.goto('/?mode=present');
+  await page.goto('/');
   await page.getByRole('button', { name: '音なしではじめる' }).click();
   await expect(page.locator('#app')).toHaveAttribute('data-sound', 'off');
   await expect(page.getByRole('button', { name: '音 オフ' })).toHaveAttribute('aria-pressed', 'false');

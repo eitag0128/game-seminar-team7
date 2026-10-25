@@ -4,18 +4,17 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 // `npm run play` が作る、ダブルクリックで開く1ファイル版をサーバーなし（file://）で確かめる。
-const playDir = join(import.meta.dirname, '..', '..', '..', 'play');
-const playFile = (name: string) => pathToFileURL(join(playDir, name)).href;
+const playFile = join(import.meta.dirname, '..', '..', '..', 'play', 'Puzzle.html');
 
-test.skip(!existsSync(join(playDir, 'Puzzle_発表モード.html')), 'npm run play で生成してから実行する');
+test.skip(!existsSync(playFile), 'npm run play で生成してから実行する');
 
-test('double-click file: present mode opens and plays without a server', async ({ page }) => {
+test('double-click file: opens with the guide and plays without a server', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
-  await page.goto(playFile('Puzzle_発表モード.html'));
+  await page.goto(pathToFileURL(playFile).href);
   await expect(page.locator('#street canvas')).toBeVisible();
-  await expect(page.locator('#app')).toHaveAttribute('data-mode', 'present');
+  await expect(page.getByRole('dialog', { name: '遊び方' })).toBeVisible();
   await page.getByRole('button', { name: '音ありではじめる' }).click();
   await expect(page.locator('#app')).toHaveAttribute('data-sound', 'on');
   await page.keyboard.down('ArrowRight');
@@ -25,10 +24,4 @@ test('double-click file: present mode opens and plays without a server', async (
   await page.getByRole('button', { name: 'ジュースのスイッチ', exact: true }).click();
   await expect(page.locator('#app')).toHaveAttribute('data-fragments', '1');
   expect(errors).toEqual([]);
-});
-
-test('double-click file: guided mode starts with the how-to-play guide', async ({ page }) => {
-  await page.goto(playFile('Puzzle_説明あり.html'));
-  await expect(page.locator('#app')).toHaveAttribute('data-mode', 'guided');
-  await expect(page.getByRole('dialog', { name: '遊び方' })).toBeVisible();
 });
