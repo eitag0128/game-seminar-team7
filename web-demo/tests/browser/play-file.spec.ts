@@ -16,7 +16,7 @@ test('double-click file: present mode opens and plays without a server', async (
   await page.goto(playFile('Puzzle_発表モード.html'));
   await expect(page.locator('#street canvas')).toBeVisible();
   await expect(page.locator('#app')).toHaveAttribute('data-mode', 'present');
-  await page.getByRole('button', { name: '歩きはじめる' }).click();
+  await page.getByRole('button', { name: '音ありではじめる' }).click();
   await expect(page.locator('#app')).toHaveAttribute('data-sound', 'on');
   await page.keyboard.down('ArrowRight');
   await expect.poll(() => page.locator('#machine').isEnabled(), { intervals: [50] }).toBe(true);

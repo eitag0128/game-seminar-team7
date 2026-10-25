@@ -16,7 +16,7 @@ test('signs are intact before the first loop and lose one more character per loo
 });
 
 test('loop whispers progress and then settle on the missing-piece hint', () => {
-  assert.equal(loopWhisper(1), '……また、同じ場所。');
+  assert.equal(loopWhisper(1), 'あれ、さっきの場所に戻ってる。');
   assert.notEqual(loopWhisper(2), loopWhisper(1));
-  assert.equal(loopWhisper(10), 'この街は、何かが欠けている。');
+  assert.equal(loopWhisper(10), 'あの自販機、壊れていたな。');
 });

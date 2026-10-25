@@ -169,7 +169,6 @@ export class Street {
       this.rect(root, -17 + this.random(i + 30) * 34, -3.4 - this.random(i + 70) * 2.6,
         0.3 + this.random(i + 50) * 2.5, 0.015 + this.random(i + 11) * 0.06, '#8ab5c6', 3.5, 0.13);
     }
-    this.label(root, '夜凪', -15.7, 4, 1.4, '#526e87', 3);
     this.machine(root);
     this.cats.push(this.makeCat(root));
     return root;

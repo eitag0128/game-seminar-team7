@@ -80,6 +80,10 @@ h2 { font-size: 22px; font-weight: 400; letter-spacing: 0.15em; margin: 0; }
 .title-dialog .text-button { font-size: 14px; }
 .title-dialog small { display: block; margin-top: 22px; font: 10px/1.6 sans-serif; letter-spacing: 0.15em; color: #6f8597; }
 [data-mode="present"] .puzzle-instruction, [data-mode="present"] .puzzle-whisper, [data-mode="present"] .next-action { display: none; }
+.start-choices { display: flex; flex-wrap: wrap; gap: 8px 32px; justify-content: flex-end; align-items: baseline; }
+.title-dialog .start-choices { justify-content: center; }
+.start-choices .text-button { display: inline-block; margin: 20px 0 0; }
+.text-button.quiet { color: #9fb3c0; border-bottom-color: #4f6676; }
 .puzzle-murmur { text-align: center; margin: 18px 0 0; font-size: 13px; letter-spacing: 0.2em; color: #d9e6e8; animation: murmur-in 2s ease-out; }
 @keyframes murmur-in { from { opacity: 0; } to { opacity: 1; } }
 .puzzle-dialog.hinting .reflection .drink[data-odd] .can { animation: odd-shimmer 2.6s ease-in-out infinite; }

@@ -19,50 +19,55 @@ app.innerHTML = `
   <div class="vignette" aria-hidden="true"></div>
   <div id="loop-flash" class="loop-flash" aria-hidden="true"></div>
   <header class="masthead">
-    <div><h1>Puzzle</h1><p>夜凪商店街</p></div>
+    <div><h1>Puzzle</h1><p>中央通り商店街</p></div>
     <div class="inventory" aria-label="記憶の断片"><span id="fragment" aria-hidden="true">◇</span><span id="inventory-count">0 / 1</span></div>
   </header>
   <button id="machine" class="machine-target" aria-label="自販機を調べる"><span>クリックして調べる</span></button>
-  <p id="thought" class="thought" role="status">知らない街。どこか、懐かしい。</p>
+  <p id="thought" class="thought" role="status">ここはどこだろう。</p>
   <p id="next-action" class="next-action" role="status"></p>
   <footer class="controls"><span><kbd>←</kbd><kbd>→</kbd> / <kbd>A</kbd><kbd>D</kbd> 歩く</span><button id="show-guide" class="help-button">遊び方</button><button id="sound-toggle" class="help-button" aria-pressed="true">音 オン</button><small>7班 · 仮素材デモ${presentMode ? ' · 発表モード' : ''}</small></footer>
   <dialog id="title" class="title-dialog" aria-labelledby="title-heading">
     <h2 id="title-heading">Puzzle</h2>
-    <p>雨の夜。知らない街。</p>
-    <button id="start-title" class="text-button">歩きはじめる <span aria-hidden="true">→</span></button>
-    <small>音が出ます</small>
+    <p>7班 プレイ用デモ</p>
+    <div class="start-choices">
+      <button id="start-title" class="text-button">音ありではじめる <span aria-hidden="true">→</span></button>
+      <button id="start-title-silent" class="text-button quiet">音なしではじめる</button>
+    </div>
   </dialog>
   <dialog id="guide" class="guide-dialog" aria-labelledby="guide-title">
-    <p class="eyebrow">はじめての街歩き</p><h2 id="guide-title">遊び方</h2>
-    <p class="guide-goal">自販機の謎を解いて、繰り返す街から抜け出そう。</p>
+    <h2 id="guide-title">遊び方</h2>
+    <p class="guide-goal">自販機のパズルを解くと、同じ道をくり返す街から先へ進めます。</p>
     <ol class="guide-steps">
-      <li><strong>歩く</strong><p><kbd>←</kbd><kbd>→</kbd> または <kbd>A</kbd><kbd>D</kbd> で左右に移動。<br>まずは右に見える、光った自販機へ。</p></li>
-      <li><strong>調べる</strong><p>自販機に近づき、マウスでクリックすると<br>パズル画面が開きます。</p></li>
-      <li><strong>見比べる</strong><p>鏡の飲み物は、左右が逆に映っています。<br><b>鏡と色が違う飲み物</b>を見つけ、<b>左側の缶の下のボタン</b>を押してください。</p></li>
+      <li><strong>歩く</strong><p><kbd>←</kbd><kbd>→</kbd> または <kbd>A</kbd><kbd>D</kbd> で左右に移動します。<br>自販機は右のほうにあります。</p></li>
+      <li><strong>調べる</strong><p>自販機の近くでクリックすると、<br>パズル画面が開きます。</p></li>
+      <li><strong>見比べる</strong><p>鏡には飲み物が左右逆に映っています。<br><b>鏡と色が違う飲み物</b>を探して、<b>左側の缶の下のボタン</b>を押してください。</p></li>
     </ol>
-    <p class="guide-after">解けたら記憶の断片を受け取り、街の右端の先へ。<br>迷ったら画面下の「遊び方」で、この説明を見直せます。</p>
-    <button id="start-walking" class="text-button">街を歩く <span aria-hidden="true">→</span></button>
+    <p class="guide-after">解くと記憶の断片が手に入り、街の右端から先へ進めます。<br>この説明は画面下の「遊び方」でもう一度見られます。</p>
+    <div class="start-choices">
+      <button id="start-walking" class="text-button">音ありではじめる <span aria-hidden="true">→</span></button>
+      <button id="start-walking-silent" class="text-button quiet">音なしではじめる</button>
+    </div>
   </dialog>
   <dialog id="puzzle" class="puzzle-dialog" aria-labelledby="puzzle-title">
-    <div class="dialog-top"><div><p class="eyebrow">夜に残されたもの</p><h2 id="puzzle-title">自動販売機</h2></div><button id="close-puzzle" class="close" aria-label="パズルを閉じる">×</button></div>
-    <p class="puzzle-instruction">鏡は左右が逆。<strong>同じ飲み物の色</strong>を見比べ、違うものの<strong>左側のボタン</strong>を押そう。</p>
+    <div class="dialog-top"><div><h2 id="puzzle-title">自動販売機</h2></div><button id="close-puzzle" class="close" aria-label="パズルを閉じる">×</button></div>
+    <p class="puzzle-instruction">鏡には左右逆に映ります。<strong>色が違う飲み物</strong>を探して、<strong>左側のボタン</strong>を押してください。</p>
     <div class="comparison">
-      <section class="cabinet" aria-label="自販機の飲料"><p class="cabinet-label">こちら側</p><div id="real-drinks" class="drink-row"></div><div class="dispense"></div></section>
+      <section class="cabinet" aria-label="自販機の飲料"><p class="cabinet-label">自販機</p><div id="real-drinks" class="drink-row"></div><div class="dispense"></div></section>
       <div class="mirror-edge" aria-hidden="true"></div>
-      <section class="cabinet reflection" aria-label="鏡に映った飲料"><p class="cabinet-label">鏡の向こう</p><div id="mirror-drinks" class="drink-row"></div><div class="dispense"></div></section>
+      <section class="cabinet reflection" aria-label="鏡に映った飲料"><p class="cabinet-label">鏡</p><div id="mirror-drinks" class="drink-row"></div><div class="dispense"></div></section>
     </div>
-    <p class="puzzle-whisper">缶の下の丸いボタンで選ぶ · 違っていたら別の飲み物を試せます · × / Esc で街へ戻る</p>
-    <p id="puzzle-murmur" class="puzzle-murmur" hidden>……鏡の中で、ひとつだけ色が違う。</p>
+    <p class="puzzle-whisper">缶の下の丸いボタンで選びます · 違っていたら別の飲み物を試せます · × / Esc で街に戻る</p>
+    <p id="puzzle-murmur" class="puzzle-murmur" hidden>鏡の中に、色が違う缶が1本ある。</p>
   </dialog>
   <dialog id="memory" class="memory-dialog" aria-labelledby="memory-title">
-    <div class="memory-shard" aria-hidden="true">◇</div><p class="eyebrow">記憶の断片 01</p>
-    <h2 id="memory-title">雨の匂いを、覚えている。</h2>
-    <p id="memory-text">自販機が直り、街のループが解けた。<br>「街へ戻る」を押したら、<b>→ / D で右端の先へ</b>歩こう。</p>
+    <div class="memory-shard" aria-hidden="true">◇</div><p class="eyebrow">記憶の断片 1 / 1</p>
+    <h2 id="memory-title">小さいころ、雨の日にこの自販機でジュースを買ってもらった。</h2>
+    <p id="memory-text">自販機が元に戻って、街のループが止まりました。<br>「街へ戻る」のあと、<b>→ / D で右端まで歩いてください</b>。</p>
     <button id="continue" class="text-button">街へ戻る <span aria-hidden="true">→</span></button>
   </dialog>
   <dialog id="ending" class="memory-dialog ending" aria-labelledby="ending-title">
-    <p class="eyebrow">雨は、まだ降っている。</p><h2 id="ending-title">知らない道が、続いている。</h2>
-    <p>ここまでが今回のデモです。</p><button id="restart" class="text-button">もう一度歩く <span aria-hidden="true">↺</span></button>
+    <h2 id="ending-title">デモはここまでです</h2>
+    <p>遊んでくれてありがとうございました。</p><button id="restart" class="text-button">もう一度遊ぶ <span aria-hidden="true">↺</span></button>
   </dialog>
   <section id="error" class="error" role="alert" hidden><h2>街を表示できませんでした</h2><p>WebGLが使えるPCブラウザで開いてください。</p><button id="reload" class="text-button">再読み込み</button></section>
 `;
@@ -72,6 +77,7 @@ const thought = document.querySelector<HTMLElement>('#thought')!;
 const nextAction = document.querySelector<HTMLElement>('#next-action')!;
 const guide = document.querySelector<HTMLDialogElement>('#guide')!;
 const startWalking = document.querySelector<HTMLButtonElement>('#start-walking')!;
+const startWalkingSilent = document.querySelector<HTMLButtonElement>('#start-walking-silent')!;
 const puzzle = document.querySelector<HTMLDialogElement>('#puzzle')!;
 const memory = document.querySelector<HTMLDialogElement>('#memory')!;
 const ending = document.querySelector<HTMLDialogElement>('#ending')!;
@@ -99,54 +105,59 @@ function readSoundPreference(): boolean {
   try { return window.localStorage.getItem('puzzle-sound') !== 'off'; } catch { return true; }
 }
 const sound = new Sound(readSoundPreference());
-function startSound(): void {
-  sound.start();
-  app.dataset.sound = sound.started ? (sound.enabled ? 'on' : 'off') : 'unavailable';
+function applySound(enabled: boolean): void {
+  sound.setEnabled(enabled);
+  try { window.localStorage.setItem('puzzle-sound', enabled ? 'on' : 'off'); } catch { /* 保存できなくても再生には影響しない */ }
+  // ブラウザの自動再生制限があるため、必ずボタン操作の中で呼ぶ。音なしなら音声処理自体を始めない。
+  if (enabled) sound.start();
+  app.dataset.sound = !enabled ? 'off' : sound.started ? 'on' : 'unavailable';
+  renderSoundToggle();
 }
 function renderSoundToggle(): void {
   soundToggle.textContent = sound.enabled ? '音 オン' : '音 オフ';
   soundToggle.setAttribute('aria-pressed', String(sound.enabled));
 }
 renderSoundToggle();
-soundToggle.addEventListener('click', () => {
-  sound.setEnabled(!sound.enabled);
-  try { window.localStorage.setItem('puzzle-sound', sound.enabled ? 'on' : 'off'); } catch { /* 保存できなくても再生には影響しない */ }
-  renderSoundToggle();
-  startSound();
-});
-// 自動再生制限のため、最初のクリックかキー入力で雨音を始める。
-window.addEventListener('pointerdown', startSound, { once: true });
-window.addEventListener('keydown', startSound, { once: true });
+app.dataset.sound = 'off';
+soundToggle.addEventListener('click', () => applySound(!sound.enabled));
 if (presentMode) {
-  document.querySelector('#memory-text')!.textContent = '欠けていたものが戻り、街の向こうで何かがひらいた。';
+  document.querySelector('#memory-text')!.textContent = '自販機が元に戻った。';
 }
 
 function overlayOpen(): boolean { return guide.open || title.open; }
-function hideTitle(): void {
+function hideTitle(withSound: boolean): void {
   keys.clear();
   title.close();
-  startSound();
-  whisper('知らない街。どこか、懐かしい。', 6000);
+  applySound(withSound);
+  whisper('ここはどこだろう。', 6000);
 }
-document.querySelector('#start-title')!.addEventListener('click', hideTitle);
-title.addEventListener('cancel', (event) => { event.preventDefault(); hideTitle(); });
+document.querySelector('#start-title')!.addEventListener('click', () => hideTitle(true));
+document.querySelector('#start-title-silent')!.addEventListener('click', () => hideTitle(false));
+title.addEventListener('cancel', (event) => { event.preventDefault(); hideTitle(false); });
 
 function showGuide(): void {
   keys.clear();
   state = { ...state, moving: false };
-  startWalking.innerHTML = '街を歩く <span aria-hidden="true">→</span>';
+  startWalking.innerHTML = '音ありではじめる <span aria-hidden="true">→</span>';
+  startWalkingSilent.hidden = false;
   if (!guide.open) guide.showModal();
 }
 function hideGuide(): void {
   keys.clear();
   guide.close();
-  whisper(state.repaired ? '→ / D で右へ。この街の先へ進もう。' : 'まずは右へ。光っている自販機を探そう。');
+  whisper(state.repaired ? '→ / D で右へ進めます。' : '自販機は右のほうにあります。');
 }
 document.querySelector('#show-guide')!.addEventListener('click', () => {
   showGuide();
+  // 途中で開いた時は音の設定を変えずに戻る。
   startWalking.innerHTML = 'ゲームに戻る <span aria-hidden="true">→</span>';
+  startWalkingSilent.hidden = true;
 });
-startWalking.addEventListener('click', () => { startSound(); hideGuide(); });
+startWalking.addEventListener('click', () => {
+  if (!startWalkingSilent.hidden) applySound(true);
+  hideGuide();
+});
+startWalkingSilent.addEventListener('click', () => { applySound(false); hideGuide(); });
 guide.addEventListener('cancel', (event) => { event.preventDefault(); hideGuide(); });
 
 function drinkMarkup(drink: (typeof DEMO.drinks)[number], reflected: boolean): string {
@@ -196,8 +207,8 @@ function update(next: GameState): void {
     loopFlash.classList.add('flash');
   }
   if (sound.lastCue) app.dataset.lastSound = sound.lastCue;
-  if (before.phase === 'memory' && state.phase === 'street') whisper(presentMode ? '道の先が、ひらけている。' : '→ / D で右へ。この街の先へ進もう。', 7000);
-  if (before.phase !== 'beyond' && state.phase === 'beyond') whisper('今度は、戻らなかった。', 7000);
+  if (before.phase === 'memory' && state.phase === 'street') whisper(presentMode ? '右の道が通れるようになった。' : '→ / D で右へ進めます。', 7000);
+  if (before.phase !== 'beyond' && state.phase === 'beyond') whisper('今度は元の場所に戻されなかった。', 7000);
 }
 
 function whisper(text: string, duration = 4500): void {
@@ -208,7 +219,7 @@ function whisper(text: string, duration = 4500): void {
 const onMachine = () => update(openPuzzle(state));
 const onClose = () => update(closePuzzle(state));
 const onContinue = () => update(continueWalking(state));
-const onRestart = () => { keys.clear(); noticedMachine = false; update(createGame()); whisper('知らない街。どこか、懐かしい。'); };
+const onRestart = () => { keys.clear(); noticedMachine = false; update(createGame()); whisper('ここはどこだろう。'); };
 machine.addEventListener('click', onMachine);
 document.querySelector('#close-puzzle')!.addEventListener('click', onClose);
 document.querySelector('#continue')!.addEventListener('click', onContinue);
@@ -260,7 +271,7 @@ function animate(now: number): void {
   machine.hidden = state.repaired || state.phase !== 'street' || overlayOpen();
   if (!noticedMachine && !state.repaired && nearMachine(state) && state.phase === 'street') {
     noticedMachine = true;
-    whisper('この自販機、どこか欠けている。', 5000);
+    whisper('この自販機、一部が白く抜けている。', 5000);
   }
   if (presentMode && state.phase === 'puzzle') {
     // 不正解には反応しない（PM回答⑤）。時間経過だけで、鏡の違いをかすかに示す。
@@ -276,10 +287,10 @@ function animate(now: number): void {
   thought.classList.toggle('visible', now < thoughtUntil && state.phase !== 'puzzle');
   nextAction.hidden = presentMode || overlayOpen() || (state.phase !== 'street' && state.phase !== 'beyond');
   const instruction = state.repaired
-    ? '→ / D で右へ歩き、街の右端の先へ進もう。'
+    ? '→ / D で右端まで歩くと、先へ進めます。'
     : nearMachine(state)
-      ? '光っている自販機をマウスでクリックして、調べよう。'
-      : '← → / A D で歩こう。まずは、光っている自販機を探そう。';
+      ? '自販機をクリックすると調べられます。'
+      : '← → / A D で歩けます。自販機を探してください。';
   if (nextAction.textContent !== instruction) nextAction.textContent = instruction;
   frame = requestAnimationFrame(animate);
 }
