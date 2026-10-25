@@ -17,6 +17,9 @@ h1 { margin: 0; font-size: clamp(32px, 4vw, 54px); font-weight: 400; letter-spac
 #fragment.collected { color: #eadcb8; text-shadow: 0 0 20px #e8d9a8; }
 .controls { position: absolute; bottom: 4%; left: 5%; right: 5%; display: flex; align-items: center; gap: 30px; color: #8096aa; font: 11px/1.6 sans-serif; letter-spacing: 0.08em; pointer-events: none; }
 .controls small { margin-left: auto; font-size: 9px; color: #72859a; }
+.help-button { pointer-events: auto; border: 1px solid #8ba4b5; background: #102237cc; padding: 7px 15px; font: 12px/1.4 sans-serif; letter-spacing: 0.1em; }
+.help-button:hover { background: #2a4258; }
+.next-action { position: absolute; bottom: 9%; left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px); width: max-content; padding: 10px 18px; margin: 0; background: #091629e8; border-left: 2px solid #9dbfc8; font: 14px/1.7 sans-serif; color: #e0edf0; text-align: center; pointer-events: none; }
 kbd { font: 10px/1.7 sans-serif; display: inline-block; border: 1px solid #74899e55; padding: 0 4px; margin-right: 3px; border-radius: 2px; }
 .machine-target { position: absolute; transform: translate(-50%, -50%); border: 0; background: transparent; padding: 0; }
 .machine-target span { position: absolute; left: 50%; top: -32px; transform: translateX(-50%); width: max-content; font-size: 11px; letter-spacing: 0.16em; color: #cedfe3; opacity: 0; transition: opacity 0.3s; }
@@ -27,6 +30,17 @@ kbd { font: 10px/1.7 sans-serif; display: inline-block; border: 1px solid #74899
 dialog { color: #cfdee1; background: #102237; border: 1px solid #4c687d; padding: 36px 42px; box-shadow: 0 20px 100px #020712aa; max-width: calc(100vw - 32px); max-height: calc(100dvh - 32px); }
 dialog::backdrop { background: #040b1bd9; backdrop-filter: blur(5px); }
 .puzzle-dialog { width: 930px; }
+.guide-dialog { width: 650px; padding: 32px 42px; }
+.guide-goal { font-size: 15px; line-height: 1.9; color: #e0e9eb; }
+.guide-steps { padding-left: 24px; margin: 24px 0; }
+.guide-steps li { padding-left: 8px; margin: 16px 0; color: #b9d1da; }
+.guide-steps strong { font-size: 15px; color: #e5e5d6; }
+.guide-steps p, .guide-after { font: 14px/1.9 sans-serif; color: #c3d5df; margin: 6px 0; }
+.guide-steps b { color: #f0e4bc; font-weight: 500; }
+.guide-after { font-size: 12px; color: #a5bdca; }
+.guide-dialog .text-button { display: block; margin: 20px 0 0 auto; font-size: 14px; }
+.puzzle-instruction { font: 14px/1.8 sans-serif; color: #d4e6eb; margin: 20px 0 0; }
+.puzzle-instruction strong { font-weight: 500; color: #f0e4bc; }
 .dialog-top { display: flex; justify-content: space-between; align-items: flex-start; }
 .eyebrow { font-size: 10px; letter-spacing: 0.22em; color: #8fa7b9; margin: 0 0 10px; }
 h2 { font-size: 22px; font-weight: 400; letter-spacing: 0.15em; margin: 0; }
@@ -48,7 +62,7 @@ h2 { font-size: 22px; font-weight: 400; letter-spacing: 0.15em; margin: 0; }
 .mirror-edge { background: linear-gradient(transparent, #a5c9d0aa, transparent); }
 .reflection { background: linear-gradient(230deg, #486675, #2a4155); opacity: 0.86; border-color: #73949d; }
 .dispense { height: 21px; width: 40%; margin: 25px auto 0; background: #11293d; border-top: 3px solid #1b3448; }
-.puzzle-whisper { text-align: center; margin: 27px 0 0; font-size: 12px; letter-spacing: 0.18em; color: #a6bdc7; }
+.puzzle-whisper { text-align: center; margin: 22px 0 0; font: 12px/1.8 sans-serif; color: #b9ced8; }
 .memory-dialog { width: 640px; text-align: center; padding: 60px 35px; background: #0d1c30; }
 .memory-shard { font-size: 68px; color: #e9ddb8; line-height: 1; margin-bottom: 35px; text-shadow: 0 0 32px #dfd8b355; }
 .memory-dialog h2 { font-size: clamp(17px, 2.3vw, 24px); margin: 25px 0; }
@@ -73,6 +87,10 @@ h2 { font-size: 22px; font-weight: 400; letter-spacing: 0.15em; margin: 0; }
   .comparison { margin: 20px 0 10px; }
   .memory-shard { font-size: 45px; margin-bottom: 15px; }
   .text-button { margin-top: 8px; }
+  .guide-dialog { padding: 20px 28px; }
+  .guide-steps { margin: 12px 0; }
+  .guide-steps li { margin: 9px 0; }
+  .guide-steps p { font-size: 13px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0s !important; }

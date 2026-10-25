@@ -15,6 +15,15 @@ test('normal play: loop, inspect mirror, wrong choice, repair, fragment, exit an
   await page.goto('/');
   await expect(page.locator('#street canvas')).toBeVisible();
   await expect(page.locator('#error')).toBeHidden();
+  await expect(page.getByRole('dialog', { name: '遊び方' })).toBeVisible();
+  await expect(page.locator('#guide')).toContainText('左側の缶の下のボタン');
+  const initialX = await page.locator('#app').getAttribute('data-x');
+  await page.keyboard.down('ArrowRight');
+  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+  await page.keyboard.up('ArrowRight');
+  await expect(page.locator('#app')).toHaveAttribute('data-x', initialX!);
+  await page.screenshot({ path: 'test-results/tutorial.png' });
+  await page.getByRole('button', { name: '街を歩く', exact: true }).click();
   await page.screenshot({ path: 'test-results/street-initial.png' });
 
   // Real keyboard movement crosses a whole street before opening the puzzle.
@@ -23,8 +32,15 @@ test('normal play: loop, inspect mirror, wrong choice, repair, fragment, exit an
   await page.keyboard.up('ArrowRight');
   await expect(page.locator('#app')).toHaveAttribute('data-fragments', '0');
   await walkToMachine(page);
+  await expect(page.locator('#next-action')).toContainText('マウスでクリック');
+  const beforeHelpX = await page.locator('#app').getAttribute('data-x');
+  await page.getByRole('button', { name: '遊び方', exact: true }).click();
+  await expect(page.locator('#guide')).toBeVisible();
+  await page.getByRole('button', { name: 'ゲームに戻る' }).click();
+  await expect(page.locator('#app')).toHaveAttribute('data-x', beforeHelpX!);
   await page.getByRole('button', { name: '自販機を調べる' }).click();
   await expect(page.getByRole('dialog', { name: '自動販売機' })).toBeVisible();
+  await expect(page.locator('.puzzle-instruction')).toContainText('左側のボタン');
   const x = await page.locator('#app').getAttribute('data-x');
   await page.keyboard.press('ArrowRight');
   await expect(page.locator('#app')).toHaveAttribute('data-x', x!);
@@ -42,6 +58,7 @@ test('normal play: loop, inspect mirror, wrong choice, repair, fragment, exit an
   await page.screenshot({ path: 'test-results/memory-fragment.png' });
   await page.getByRole('button', { name: '街へ戻る' }).click();
   await expect(page.locator('#machine')).toBeHidden();
+  await expect(page.locator('#next-action')).toContainText('街の右端の先へ');
   await page.screenshot({ path: 'test-results/street-repaired.png' });
   await page.keyboard.down('KeyD');
   await expect(page.locator('#app')).toHaveAttribute('data-phase', 'ending', { timeout: 25000 });
@@ -58,6 +75,10 @@ test('normal play: loop, inspect mirror, wrong choice, repair, fragment, exit an
 test('left wrap, A/D controls, focus loss and compact desktop layout', async ({ page }) => {
   await page.setViewportSize({ width: 800, height: 600 });
   await page.goto('/');
+  const guideBox = await page.locator('#guide').boundingBox();
+  expect(guideBox!.height).toBeLessThanOrEqual(600);
+  await page.screenshot({ path: 'test-results/compact-tutorial.png' });
+  await page.getByRole('button', { name: '街を歩く', exact: true }).click();
   await page.keyboard.down('KeyA');
   await expect(page.locator('#app')).toHaveAttribute('data-loops', '1', { timeout: 20000 });
   await page.evaluate(() => window.dispatchEvent(new Event('blur')));
