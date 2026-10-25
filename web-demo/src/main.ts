@@ -8,7 +8,9 @@ import { Sound } from './audio.ts';
 import { loopWhisper } from './loopEcho.ts';
 
 // ?mode=present: 授業の発表用。説明を減らし、仕様書の「雰囲気で分かる」設計を試す。
-const presentMode = new URLSearchParams(window.location.search).get('mode') === 'present';
+// play/Puzzle_発表モード.html は <html data-play-mode="present"> で同じモードになる。
+const presentMode = new URLSearchParams(window.location.search).get('mode') === 'present'
+  || document.documentElement.dataset.playMode === 'present';
 const oddDrink = DEMO.drinks.find((drink) => String(drink.color) !== String(drink.reflectionColor))?.id;
 
 const app = document.querySelector<HTMLElement>('#app')!;

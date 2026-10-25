@@ -2,7 +2,13 @@
 
 既存の Team7 リポジトリを使う、Three.js + TypeScript + Vite の独立アプリです。リポジトリ直下の Unity プロジェクトは変更していません。開発場所は `D:/ゲーム制作/ゲーム制作演習/game-seminar-team7/web-demo`。
 
-## Windows / Mac から起動
+## いちばん簡単な起動（ダブルクリック）
+
+リポジトリ直下の `play/Puzzle_発表モード.html` か `play/Puzzle_説明あり.html` をダブルクリックすると、既定のブラウザで開いて遊べます。Node.js・`npm`・開発サーバーは不要で、ネット接続も要りません。USBメモリ等でHTMLファイル1つだけ渡しても動きます。
+
+`src/` を変更したら、このフォルダーで `npm run play` を実行して2つのHTMLを作り直し、一緒に commit してください（ビルド後、JS と CSS をHTMLに埋め込みます。`scripts/make-play.mjs`）。
+
+## 開発用の起動（Windows / Mac）
 
 Node.js 24 を推奨（最小22.18）。既存の作業を保存し、Git の状態を確認してからリポジトリを fast-forward で更新してください。
 
@@ -32,7 +38,7 @@ npm run dev
 
 ## 発表モード（授業デモ用）
 
-`http://127.0.0.1:5173/?mode=present` で開きます。仕様書の「問題の説明はほとんどなく、雰囲気で分かるデザイン」を試すモードです。通常モード（URLに何も付けない）は従来どおりの初見向け説明です。
+`play/Puzzle_発表モード.html` をダブルクリック、または開発サーバーで `http://127.0.0.1:5173/?mode=present` を開きます。仕様書の「問題の説明はほとんどなく、雰囲気で分かるデザイン」を試すモードです。通常モード（URLに何も付けない）は従来どおりの初見向け説明です。
 
 - 起動時は「遊び方」ではなくタイトル「歩きはじめる」だけ。画面下の次の行動案内とパズル内の説明文を出しません。
 - 画面下の「遊び方」は残してあり、詰まった時の保険として通常の説明を開けます。
@@ -93,5 +99,6 @@ Three.jsを含む現在のJSは約576KB（gzip約148KB）で、Viteの500KB警�
 | `src/loopEcho.ts` | ループごとの看板の欠け・黒猫・独白 |
 | `tests/progression.test.ts`, `tests/loopEcho.test.ts` | 進行ロジックとループ演出の検証 |
 | `tests/browser/demo.spec.ts` | ブラウザ通常操作・発表モードの検証 |
+| `scripts/make-play.mjs`, `tests/browser/play-file.spec.ts` | ダブルクリック用1ファイルHTMLの生成と、サーバーなし（file://）での動作確認 |
 
 Gドライブの資料原本はここへ転載していません。MacBookではこのリポジトリを更新して `web-demo` を開いてください。

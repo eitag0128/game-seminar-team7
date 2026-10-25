@@ -2,6 +2,15 @@
 
 大学「ゲーム制作演習」Team7 の共同開発リポジトリです。使用エンジン: Unity
 
+## ブラウザデモを遊ぶだけなら
+
+[`play/`](play/) フォルダの HTML をダブルクリックするだけです。Node.js・コマンド・ネット接続は不要です（Windows / Mac 共通）。
+
+- `Puzzle_発表モード.html`: 授業の発表用。説明を減らした版
+- `Puzzle_説明あり.html`: 初見向けの「遊び方」付き
+
+デモの開発・作り直しは [web-demo/README.md](web-demo/README.md) を参照してください。
+
 ## 初回セットアップ(Mac / Windows 共通)
 
 ```bash
