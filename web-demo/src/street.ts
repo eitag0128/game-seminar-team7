@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { DEMO } from './config.ts';
 import type { GameState } from './progression.ts';
+import { CAT_FROM_LOOP, SIGNS, fadedSigns } from './loopEcho.ts';
 
 /** TEMP art: simple geometry and generated shop signs, no supplied concept art. */
 export class Street {
@@ -13,6 +14,9 @@ export class Street {
   private machinePanels: THREE.Mesh[] = [];
   private gaps: THREE.Mesh[] = [];
   private lamps: THREE.Mesh[] = [];
+  private signs: { index: number; draw: (text: string) => void }[] = [];
+  private cats: THREE.Group[] = [];
+  private shownLoops = -1;
   private rain: THREE.LineSegments;
   private rainPositions: Float32Array;
   private width = 1;
@@ -94,21 +98,28 @@ export class Street {
     return mesh;
   }
 
-  private label(parent: THREE.Object3D, text: string, x: number, y: number, width: number, color: string, z: number): void {
+  /** Returns a redraw function so loop echoes can rewrite shop signs in place. */
+  private label(parent: THREE.Object3D, text: string, x: number, y: number, width: number, color: string, z: number): (text: string) => void {
     const canvas = document.createElement('canvas');
     canvas.width = 512; canvas.height = 96;
     const context = canvas.getContext('2d')!;
-    context.fillStyle = color;
-    context.font = '38px "Yu Mincho", "Hiragino Mincho ProN", serif';
-    context.textAlign = 'center'; context.textBaseline = 'middle';
-    context.fillText(text, 256, 48);
     const texture = new THREE.CanvasTexture(canvas);
+    const draw = (value: string) => {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = color;
+      context.font = '38px "Yu Mincho", "Hiragino Mincho ProN", serif';
+      context.textAlign = 'center'; context.textBaseline = 'middle';
+      context.fillText(value, 256, 48);
+      texture.needsUpdate = true;
+    };
+    draw(text);
     this.textures.push(texture);
     const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false });
     const geometry = new THREE.PlaneGeometry(width, width * 96 / 512);
     this.geometries.add(geometry);
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z); parent.add(mesh);
+    return draw;
   }
 
   private makeStreet(): THREE.Group {
@@ -126,17 +137,17 @@ export class Street {
     this.rect(root, 0, -2.9, 36, 0.17, '#45627a', 2);
     this.rect(root, 0, -3.08, 36, 0.12, '#0b162b', 2.1);
     const shops = [
-      { x: -15, w: 4.5, h: 5.8, sign: '喫茶  月灯', color: '#7c9a9a' },
-      { x: -9.8, w: 5.5, h: 7.8, sign: 'あおい商店', color: '#759bad' },
-      { x: -3.8, w: 5.9, h: 6.3, sign: '古書  雨音', color: '#6b91ac' },
-      { x: 4.4, w: 6.8, h: 7.4, sign: 'ひかり写真館', color: '#8c8eaa' },
-      { x: 12.5, w: 8, h: 6.4, sign: '夜 凪 商 店 街', color: '#6d8a9c' },
+      { x: -15, w: 4.5, h: 5.8, sign: SIGNS[0], color: '#7c9a9a' },
+      { x: -9.8, w: 5.5, h: 7.8, sign: SIGNS[1], color: '#759bad' },
+      { x: -3.8, w: 5.9, h: 6.3, sign: SIGNS[2], color: '#6b91ac' },
+      { x: 4.4, w: 6.8, h: 7.4, sign: SIGNS[3], color: '#8c8eaa' },
+      { x: 12.5, w: 8, h: 6.4, sign: SIGNS[4], color: '#6d8a9c' },
     ];
     for (const [index, shop] of shops.entries()) {
       this.rect(root, shop.x, shop.h / 2 - 2.8, shop.w, shop.h, index % 2 ? '#1b3049' : '#1c2d47', 2);
       this.rect(root, shop.x, 0, shop.w - 0.25, 3.5, '#101f34', 2.2);
       this.rect(root, shop.x, 1.5, shop.w - 0.25, 0.7, '#263f58', 2.3);
-      this.label(root, shop.sign, shop.x, 1.5, shop.w - 0.7, shop.color, 2.5);
+      this.signs.push({ index, draw: this.label(root, shop.sign, shop.x, 1.5, shop.w - 0.7, shop.color, 2.5) });
       this.rect(root, shop.x, 0.94, shop.w + 0.1, 0.22, '#42637c', 2.4);
       this.rect(root, shop.x, -0.95, shop.w - 0.7, 3.1, '#23354c', 2.3);
       for (let row = 0; row < 15; row++) {
@@ -160,7 +171,26 @@ export class Street {
     }
     this.label(root, '夜凪', -15.7, 4, 1.4, '#526e87', 3);
     this.machine(root);
+    this.cats.push(this.makeCat(root));
     return root;
+  }
+
+  /** PROTOTYPE loop echo: the same black cat sits and stares at the machine. */
+  private makeCat(root: THREE.Group): THREE.Group {
+    const cat = new THREE.Group();
+    this.circle(cat, 0, 0.22, 0.27, '#070d1b', 0).scale.set(1.1, 0.95, 1);
+    this.circle(cat, 0.13, 0.55, 0.17, '#070d1b', 0.01);
+    for (const dx of [0.05, 0.22]) {
+      const ear = this.rect(cat, dx, 0.72, 0.09, 0.12, '#070d1b', 0.01);
+      ear.rotation.z = dx > 0.1 ? -0.4 : 0.4;
+    }
+    const tail = this.rect(cat, -0.33, 0.12, 0.38, 0.06, '#070d1b', 0);
+    tail.rotation.z = 0.5;
+    for (const dx of [0.12, 0.22]) this.circle(cat, dx, 0.57, 0.025, '#e9e1a6', 0.02);
+    cat.position.set(DEMO.machineX - 1.55, -2.85, 4.6);
+    cat.visible = false;
+    root.add(cat);
+    return cat;
   }
 
   private machine(root: THREE.Group): void {
@@ -227,6 +257,12 @@ export class Street {
     this.gaps.forEach((gap) => { gap.visible = !state.repaired; });
     this.machinePanels.forEach((panel) => { panel.material = this.material(state.repaired ? '#7ba7b5' : '#668eaa', 1); });
     this.lamps.forEach((lamp) => { lamp.scale.setScalar(1 + Math.sin(time * 1.5) * 0.02); });
+    if (state.loops !== this.shownLoops) {
+      this.shownLoops = state.loops;
+      const texts = fadedSigns(state.loops);
+      this.signs.forEach((sign) => sign.draw(texts[sign.index]));
+      this.cats.forEach((cat) => { cat.visible = state.loops >= CAT_FROM_LOOP; });
+    }
     // After repair, only the original street remains. Its right-hand exit leads onward.
     this.tiles.forEach((tile, index) => { tile.visible = !state.repaired || index === 1; });
     for (let i = 0; i < DEMO.rainCount; i++) {
