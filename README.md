@@ -4,7 +4,7 @@
 
 ## ブラウザデモを遊ぶだけなら
 
-URLを開くだけです（GitHub Pages。main に push すると自動で更新）。
+URLを開くだけです（GitHub Pages。main に push すると自動で更新）。PC でもスマホでも遊べます。
 
 https://eitag0128.github.io/game-seminar-team7/
 

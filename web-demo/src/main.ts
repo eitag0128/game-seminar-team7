@@ -16,19 +16,21 @@ app.innerHTML = `
     <div><h1>Puzzle</h1><p>中央通り商店街</p></div>
     <div class="inventory" aria-label="記憶の断片"><span id="fragment" aria-hidden="true">◇</span><span id="inventory-count">0 / 1</span></div>
   </header>
-  <button id="machine" class="machine-target" aria-label="自販機を調べる"><span>クリックして調べる</span></button>
+  <button id="machine" class="machine-target" aria-label="自販機を調べる"><span><span class="for-keys">クリック</span><span class="for-touch">タップ</span>して調べる</span></button>
   <p id="thought" class="thought" role="status">ここはどこだろう。</p>
   <p id="next-action" class="next-action" role="status"></p>
-  <footer class="controls"><span><kbd>←</kbd><kbd>→</kbd> / <kbd>A</kbd><kbd>D</kbd> 歩く</span><button id="show-guide" class="help-button">遊び方</button><button id="sound-toggle" class="help-button" aria-pressed="true">音 オン</button><small>7班 · 仮素材デモ</small></footer>
+  <button id="touch-left" class="touch-move left" aria-label="左へ歩く">◀</button>
+  <button id="touch-right" class="touch-move right" aria-label="右へ歩く">▶</button>
+  <footer class="controls"><span class="for-keys"><kbd>←</kbd><kbd>→</kbd> / <kbd>A</kbd><kbd>D</kbd> 歩く</span><button id="show-guide" class="help-button">遊び方</button><button id="sound-toggle" class="help-button" aria-pressed="true">音 オン</button><small>7班 · 仮素材デモ</small></footer>
   <dialog id="guide" class="guide-dialog" aria-labelledby="guide-title">
     <h2 id="guide-title">遊び方</h2>
     <p class="guide-goal">自販機のパズルを解くと、同じ道をくり返す街から先へ進めます。</p>
     <ol class="guide-steps">
-      <li><strong>歩く</strong><p><kbd>←</kbd><kbd>→</kbd> または <kbd>A</kbd><kbd>D</kbd> で左右に移動します。<br>自販機は右のほうにあります。</p></li>
-      <li><strong>調べる</strong><p>自販機の近くでクリックすると、<br>パズル画面が開きます。</p></li>
+      <li><strong>歩く</strong><p><span class="for-keys"><kbd>←</kbd><kbd>→</kbd> または <kbd>A</kbd><kbd>D</kbd> で左右に移動します。</span><span class="for-touch">画面下の ◀ ▶ を押している間、左右に歩きます。</span><br>自販機は右のほうにあります。</p></li>
+      <li><strong>調べる</strong><p>自販機の近くで<span class="for-keys">クリック</span><span class="for-touch">タップ</span>すると、<br>パズル画面が開きます。</p></li>
       <li><strong>見比べる</strong><p>鏡には飲み物が左右逆に映っています。<br><b>鏡と色が違う飲み物</b>を探して、<b>左側の缶の下のボタン</b>を押してください。</p></li>
     </ol>
-    <p class="guide-after">解くと記憶の断片が手に入り、街の右端から先へ進めます。<br>この説明は画面下の「遊び方」でもう一度見られます。</p>
+    <p class="guide-after">解くと記憶の断片が手に入り、街の右端から先へ進めます。<br>この説明は画面下の「遊び方」でもう一度見られます。<span class="for-touch"><br>スマホは横向きにすると街が広く見えます。</span></p>
     <div class="start-choices">
       <button id="start-walking" class="text-button">音ありではじめる <span aria-hidden="true">→</span></button>
       <button id="start-walking-silent" class="text-button quiet">音なしではじめる</button>
@@ -42,12 +44,12 @@ app.innerHTML = `
       <div class="mirror-edge" aria-hidden="true"></div>
       <section class="cabinet reflection" aria-label="鏡に映った飲料"><p class="cabinet-label">鏡</p><div id="mirror-drinks" class="drink-row"></div><div class="dispense"></div></section>
     </div>
-    <p class="puzzle-whisper">缶の下の丸いボタンで選びます · 違っていたら別の飲み物を試せます · × / Esc で街に戻る</p>
+    <p class="puzzle-whisper">缶の下の丸いボタンで選びます · 違っていたら別の飲み物を試せます · ×<span class="for-keys"> / Esc</span> で街に戻る</p>
   </dialog>
   <dialog id="memory" class="memory-dialog" aria-labelledby="memory-title">
     <div class="memory-shard" aria-hidden="true">◇</div><p class="eyebrow">記憶の断片 1 / 1</p>
     <h2 id="memory-title">小さいころ、雨の日にこの自販機でジュースを買ってもらった。</h2>
-    <p id="memory-text">自販機が元に戻って、街のループが止まりました。<br>「街へ戻る」のあと、<b>→ / D で右端まで歩いてください</b>。</p>
+    <p id="memory-text">自販機が元に戻って、街のループが止まりました。<br>「街へ戻る」のあと、<b><span class="for-keys">→ / D</span><span class="for-touch">▶</span> で右端まで歩いてください</b>。</p>
     <button id="continue" class="text-button">街へ戻る <span aria-hidden="true">→</span></button>
   </dialog>
   <dialog id="ending" class="memory-dialog ending" aria-labelledby="ending-title">
@@ -82,6 +84,30 @@ let disposed = false;
 let noticedMachine = false;
 const keys = new Set<string>();
 
+// スマホ・タブレットでは画面の ◀ ▶ で歩く。キーを押せばキー操作の案内に戻る。
+let touchUI = window.matchMedia('(pointer: coarse)').matches;
+function setInputMode(touch: boolean): void {
+  touchUI = touch;
+  app.dataset.input = touch ? 'touch' : 'keys';
+}
+setInputMode(touchUI);
+window.addEventListener('pointerdown', (event) => { if (event.pointerType === 'touch' && !touchUI) setInputMode(true); }, { capture: true });
+const touchButtons = [...document.querySelectorAll<HTMLButtonElement>('.touch-move')];
+function bindHold(button: HTMLButtonElement, code: string): void {
+  const release = () => { keys.delete(code); button.classList.remove('held'); };
+  button.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    if (guide.open || (state.phase !== 'street' && state.phase !== 'beyond')) return;
+    try { button.setPointerCapture(event.pointerId); } catch { /* 指が外れても pointerup で止まる */ }
+    keys.add(code);
+    button.classList.add('held');
+  });
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) button.addEventListener(type, release);
+  button.addEventListener('contextmenu', (event) => event.preventDefault());
+}
+bindHold(touchButtons[0], 'TouchLeft');
+bindHold(touchButtons[1], 'TouchRight');
+
 function readSoundPreference(): boolean {
   try { return window.localStorage.getItem('puzzle-sound') !== 'off'; } catch { return true; }
 }
@@ -108,6 +134,8 @@ function showGuide(): void {
   startWalking.innerHTML = '音ありではじめる <span aria-hidden="true">→</span>';
   startWalkingSilent.hidden = false;
   if (!guide.open) guide.showModal();
+  // 背の低い画面では、開いた直後に下の開始ボタンまでスクロールされるので先頭に戻す。
+  guide.scrollTop = 0;
 }
 function hideGuide(): void {
   keys.clear();
@@ -199,6 +227,7 @@ const movementKeys = new Set(['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD']);
 function onKeyDown(event: KeyboardEvent): void {
   if (movementKeys.has(event.code) && !guide.open && (state.phase === 'street' || state.phase === 'beyond')) {
     event.preventDefault(); keys.add(event.code);
+    if (touchUI) setInputMode(false);
   }
 }
 function onKeyUp(event: KeyboardEvent): void { keys.delete(event.code); }
@@ -221,7 +250,8 @@ function animate(now: number): void {
   if (disposed || !street || !error.hidden) return;
   const dt = Math.min((now - previousTime) / 1000, 0.05);
   previousTime = now;
-  const direction = Number(keys.has('ArrowRight') || keys.has('KeyD')) - Number(keys.has('ArrowLeft') || keys.has('KeyA'));
+  const direction = Number(keys.has('ArrowRight') || keys.has('KeyD') || keys.has('TouchRight'))
+    - Number(keys.has('ArrowLeft') || keys.has('KeyA') || keys.has('TouchLeft'));
   update(move(state, guide.open ? 0 : direction, dt));
   app.dataset.x = state.x.toFixed(3);
   const location = street.render(state, now / 1000, dt);
@@ -237,12 +267,14 @@ function animate(now: number): void {
   machine.disabled = !nearMachine(state);
   machine.classList.toggle('near', nearMachine(state));
   thought.classList.toggle('visible', now < thoughtUntil && state.phase !== 'puzzle');
-  nextAction.hidden = guide.open || (state.phase !== 'street' && state.phase !== 'beyond');
+  const walking = !guide.open && (state.phase === 'street' || state.phase === 'beyond');
+  nextAction.hidden = !walking;
+  touchButtons.forEach((button) => { button.hidden = !walking; });
   const instruction = state.repaired
-    ? '→ / D で右端まで歩くと、先へ進めます。'
+    ? `${touchUI ? '▶' : '→ / D'} で右端まで歩くと、先へ進めます。`
     : nearMachine(state)
-      ? '自販機をクリックすると調べられます。'
-      : '← → / A D で歩けます。自販機を探してください。';
+      ? `自販機を${touchUI ? 'タップ' : 'クリック'}すると調べられます。`
+      : `${touchUI ? '◀ ▶' : '← → / A D'} で歩けます。自販機を探してください。`;
   if (nextAction.textContent !== instruction) nextAction.textContent = instruction;
   frame = requestAnimationFrame(animate);
 }

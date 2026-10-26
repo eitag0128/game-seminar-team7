@@ -7,6 +7,8 @@ export const DEMO = {
   interactionDistance: 2.7,
   nextAreaDistance: 6,
   viewHeight: 13,
+  // 縦長のスマホ画面でも、街を最低この幅だけ横に見せる（足りない分は上下に広げる）。
+  minViewWidth: 12,
   rainCount: 220,
   drinks: [
     { id: 'soda', name: 'ソーダ', color: '#72b9cf', reflectionColor: '#72b9cf' },

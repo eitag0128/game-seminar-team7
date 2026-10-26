@@ -21,6 +21,7 @@ export class Street {
   private rainPositions: Float32Array;
   private width = 1;
   private height = 1;
+  private pixelsPerUnit = 1;
   private materials = new Map<string, THREE.MeshBasicMaterial>();
   private geometries = new Set<THREE.BufferGeometry>();
   private textures: THREE.Texture[] = [];
@@ -237,8 +238,14 @@ export class Street {
   private resize(): void {
     this.width = Math.max(1, this.host.clientWidth);
     this.height = Math.max(1, this.host.clientHeight);
-    const halfHeight = DEMO.viewHeight / 2;
-    const halfWidth = halfHeight * this.width / this.height;
+    const aspect = this.width / this.height;
+    let halfHeight = DEMO.viewHeight / 2;
+    let halfWidth = halfHeight * aspect;
+    if (halfWidth < DEMO.minViewWidth / 2) {
+      halfWidth = DEMO.minViewWidth / 2;
+      halfHeight = halfWidth / aspect;
+    }
+    this.pixelsPerUnit = this.height / (halfHeight * 2);
     this.camera.left = -halfWidth; this.camera.right = halfWidth;
     this.camera.top = halfHeight; this.camera.bottom = -halfHeight;
     this.camera.updateProjectionMatrix();
@@ -282,7 +289,7 @@ export class Street {
     let machineX = DEMO.machineX;
     if (!state.repaired) machineX += Math.round((state.x - machineX) / DEMO.streetLength) * DEMO.streetLength;
     const point = new THREE.Vector3(machineX, -1.3, 5).project(this.camera);
-    return { x: (point.x + 1) * this.width / 2, y: (1 - point.y) * this.height / 2, scale: this.height / DEMO.viewHeight };
+    return { x: (point.x + 1) * this.width / 2, y: (1 - point.y) * this.height / 2, scale: this.pixelsPerUnit };
   }
 
   dispose(): void {

@@ -77,6 +77,34 @@ h2 { font-size: 22px; font-weight: 700; margin: 0; }
 .start-choices { display: flex; flex-wrap: wrap; gap: 8px 32px; justify-content: flex-end; align-items: baseline; }
 .start-choices .text-button { display: inline-block; margin: 20px 0 0; }
 .text-button.quiet { color: #9fb3c0; border-bottom-color: #4f6676; }
+/* スマホ・タブレット: 画面の ◀ ▶ で歩く */
+#app { touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+#app[data-input="touch"] .for-keys, #app:not([data-input="touch"]) .for-touch { display: none; }
+.touch-move { display: none; position: absolute; bottom: calc(4% + env(safe-area-inset-bottom)); width: 76px; height: 76px; border-radius: 50%; border: 1px solid #8ba4b5aa; background: #102237b3; color: #dce8ec; font-size: 26px; line-height: 1; touch-action: none; }
+.touch-move.left { left: calc(4% + env(safe-area-inset-left)); }
+.touch-move.right { right: calc(4% + env(safe-area-inset-right)); }
+.touch-move.held { background: #2a4258e6; }
+[data-input="touch"] .touch-move { display: block; }
+[data-input="touch"] .controls { left: 50%; right: auto; bottom: calc(4% + env(safe-area-inset-bottom) + 18px); transform: translateX(-50%); width: max-content; gap: 12px; }
+[data-input="touch"] .controls small { display: none; }
+[data-input="touch"] .help-button { padding: 10px 14px; font-size: 14px; }
+[data-input="touch"] .next-action { bottom: calc(4% + env(safe-area-inset-bottom) + 92px); }
+[data-input="touch"] .thought { bottom: calc(4% + env(safe-area-inset-bottom) + 150px); }
+/* 横向きのスマホなど高さが足りない画面: 案内を上へ逃がし、パズルを縦に詰める */
+@media (max-height: 500px) {
+  [data-input="touch"] .next-action { top: calc(env(safe-area-inset-top) + 10px); bottom: auto; padding: 6px 12px; font-size: 13px; }
+  [data-input="touch"] .thought { top: 24%; bottom: auto; }
+  .puzzle-instruction { margin-top: 8px; }
+  .comparison { margin: 10px 0 6px; }
+  .cabinet { padding: 8px 10px 10px; }
+  .cabinet-label, .dispense { display: none; }
+  .drink-row { padding: 10px 6px 8px; }
+  .drink { gap: 10px; }
+  .can { width: 30px; height: 60px; }
+  .puzzle-whisper { margin-top: 8px; }
+  .guide-steps li { margin: 6px 0; }
+  .guide-steps p, .guide-after { line-height: 1.6; }
+}
 @media (max-width: 760px) {
   .controls { gap: 10px; flex-wrap: wrap; font-size: 9px; }
   .controls small { display: none; }
