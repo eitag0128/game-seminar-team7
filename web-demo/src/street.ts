@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { DEMO } from './config.ts';
 import type { GameState } from './progression.ts';
 import { CAT_FROM_LOOP, SIGNS, fadedSigns } from './loopEcho.ts';
+// デザイナー（山口さん）の待機画。?inline でJSに埋め込み、ダブルクリック版でも読めるようにする。
+import girlIdleUrl from './assets/girl-idle.png?inline';
 
 /** TEMP art: simple geometry and generated shop signs, no supplied concept art. */
 export class Street {
@@ -9,7 +11,7 @@ export class Street {
   private scene = new THREE.Scene();
   private camera = new THREE.OrthographicCamera();
   private girl = new THREE.Group();
-  private legs: THREE.Mesh[] = [];
+  private sprite!: THREE.Mesh;
   private tiles: THREE.Group[] = [];
   private machinePanels: THREE.Mesh[] = [];
   private gaps: THREE.Mesh[] = [];
@@ -214,25 +216,21 @@ export class Street {
 
   private makeGirl(): void {
     this.circle(this.girl, 0, -0.02, 0.38, '#060e20', 6, 0.45).scale.y = 0.2;
-    for (const x of [-0.11, 0.11]) {
-      this.legs.push(this.rect(this.girl, x, 0.25, 0.11, 0.47, '#19283c', 7));
-      this.rect(this.girl, x + 0.025, 0.03, 0.19, 0.09, '#0d1628', 7.2);
-    }
-    const ponchoShape = new THREE.Shape();
-    ponchoShape.moveTo(-0.18, 1.17); ponchoShape.lineTo(0.18, 1.17);
-    ponchoShape.lineTo(0.38, 0.45); ponchoShape.lineTo(-0.38, 0.45); ponchoShape.closePath();
-    const geometry = new THREE.ShapeGeometry(ponchoShape); this.geometries.add(geometry);
-    const poncho = new THREE.Mesh(geometry, this.material('#c5aa6c', 1));
-    poncho.position.z = 7.5; this.girl.add(poncho);
-    this.rect(this.girl, -0.22, 0.8, 0.07, 0.45, '#e0cb91', 7.6);
-    this.circle(this.girl, 0, 1.32, 0.24, '#162236', 7.6);
-    this.rect(this.girl, 0.09, 1.27, 0.2, 0.29, '#cfb9a3', 7.7);
-    this.rect(this.girl, -0.08, 1.35, 0.22, 0.29, '#152033', 7.8);
-    this.rect(this.girl, 0.32, 1.42, 0.025, 1.35, '#9fbdc4', 7.3);
-    const canopy = this.circle(this.girl, 0.22, 1.92, 0.82, '#7ba2b5', 7.9, 0.55);
-    canopy.scale.y = 0.44;
-    this.rect(this.girl, 0.22, 1.86, 1.63, 0.025, '#b4cdd1', 8, 0.7);
-    this.girl.position.y = -2.78;
+    // 立ち絵1枚（280x640、右向き）。足元の中心が girl の原点に来るよう置く。歩きの絵が届くまでは反転と揺れで代用。
+    const height = DEMO.girlHeight;
+    const width = height * 280 / 640;
+    const texture = new THREE.TextureLoader().load(girlIdleUrl);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    this.textures.push(texture);
+    // 夜の街から浮かないよう、少しだけ青暗く乗算する。
+    const material = new THREE.MeshBasicMaterial({ map: texture, color: '#c3cddc', transparent: true, alphaTest: 0.05, depthWrite: false });
+    const geometry = new THREE.PlaneGeometry(width, height);
+    geometry.translate(width * (0.5 - 150 / 280), height / 2, 0);
+    this.geometries.add(geometry);
+    this.sprite = new THREE.Mesh(geometry, material);
+    this.sprite.position.z = 7.5;
+    this.girl.add(this.sprite);
+    this.girl.position.y = -2.85;
   }
 
   private resize(): void {
@@ -256,10 +254,9 @@ export class Street {
     this.camera.position.x = state.x;
     this.girl.position.x = state.x;
     this.girl.scale.x = state.facing;
-    const stride = state.moving ? Math.sin(time * 13) * 0.075 : 0;
-    this.legs[0].position.x = -0.11 + stride;
-    this.legs[1].position.x = 0.11 - stride;
-    this.girl.position.y = -2.78 + (state.moving ? Math.abs(Math.sin(time * 13)) * 0.025 : 0);
+    const step = Math.sin(time * 9);
+    this.girl.position.y = -2.85 + (state.moving ? Math.abs(step) * 0.05 : 0);
+    this.sprite.rotation.z = state.moving ? step * 0.025 : 0;
     this.gaps.forEach((gap) => { gap.visible = !state.repaired; });
     this.machinePanels.forEach((panel) => { panel.material = this.material(state.repaired ? '#7ba7b5' : '#668eaa', 1); });
     this.lamps.forEach((lamp) => { lamp.scale.setScalar(1 + Math.sin(time * 1.5) * 0.02); });
