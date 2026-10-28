@@ -2,8 +2,15 @@ import * as THREE from 'three';
 import { DEMO } from './config.ts';
 import type { GameState } from './progression.ts';
 import { CAT_FROM_LOOP, SIGNS, fadedSigns } from './loopEcho.ts';
-// デザイナー（山口さん）の待機画。?inline でJSに埋め込み、ダブルクリック版でも読めるようにする。
+// デザイナー（山口さん）の待機画と歩き差分2枚。?inline でJSに埋め込み、ダブルクリック版でも読めるようにする。
+// 3枚とも同じ枠（291x640、右向き）で切り出してあるので、差し替えても位置はずれない。
 import girlIdleUrl from './assets/girl-idle.png?inline';
+import girlWalk1Url from './assets/girl-walk1.png?inline';
+import girlWalk2Url from './assets/girl-walk2.png?inline';
+
+// 歩き差分は腰と手だけが違い脚は同じなので、間に待機画を挟んで脚が開く・閉じるを交互に見せる。
+const WALK_CYCLE = [1, 0, 2, 0] as const;
+const WALK_FRAME_SECONDS = 0.16;
 
 /** TEMP art: simple geometry and generated shop signs, no supplied concept art. */
 export class Street {
@@ -12,6 +19,8 @@ export class Street {
   private camera = new THREE.OrthographicCamera();
   private girl = new THREE.Group();
   private sprite!: THREE.Mesh;
+  private girlFrames: THREE.MeshBasicMaterial[] = [];
+  private walkTime = 0;
   private tiles: THREE.Group[] = [];
   private machinePanels: THREE.Mesh[] = [];
   private gaps: THREE.Mesh[] = [];
@@ -216,18 +225,21 @@ export class Street {
 
   private makeGirl(): void {
     this.circle(this.girl, 0, -0.02, 0.38, '#060e20', 6, 0.45).scale.y = 0.2;
-    // 立ち絵1枚（280x640、右向き）。足元の中心が girl の原点に来るよう置く。歩きの絵が届くまでは反転と揺れで代用。
+    // 足元の中心が girl の原点に来るよう置く。左へ歩く時は左右反転する。
     const height = DEMO.girlHeight;
-    const width = height * 280 / 640;
-    const texture = new THREE.TextureLoader().load(girlIdleUrl);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    this.textures.push(texture);
-    // 夜の街から浮かないよう、少しだけ青暗く乗算する。
-    const material = new THREE.MeshBasicMaterial({ map: texture, color: '#c3cddc', transparent: true, alphaTest: 0.05, depthWrite: false });
+    const width = height * 291 / 640;
+    const loader = new THREE.TextureLoader();
+    for (const url of [girlIdleUrl, girlWalk1Url, girlWalk2Url]) {
+      const texture = loader.load(url);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      this.textures.push(texture);
+      // 夜の街から浮かないよう、少しだけ青暗く乗算する。
+      this.girlFrames.push(new THREE.MeshBasicMaterial({ map: texture, color: '#c3cddc', transparent: true, alphaTest: 0.05, depthWrite: false }));
+    }
     const geometry = new THREE.PlaneGeometry(width, height);
-    geometry.translate(width * (0.5 - 150 / 280), height / 2, 0);
+    geometry.translate(width * (0.5 - 150 / 291), height / 2, 0);
     this.geometries.add(geometry);
-    this.sprite = new THREE.Mesh(geometry, material);
+    this.sprite = new THREE.Mesh(geometry, this.girlFrames[0]);
     this.sprite.position.z = 7.5;
     this.girl.add(this.sprite);
     this.girl.position.y = -2.85;
@@ -254,9 +266,12 @@ export class Street {
     this.camera.position.x = state.x;
     this.girl.position.x = state.x;
     this.girl.scale.x = state.facing;
-    const step = Math.sin(time * 9);
-    this.girl.position.y = -2.85 + (state.moving ? Math.abs(step) * 0.05 : 0);
-    this.sprite.rotation.z = state.moving ? step * 0.025 : 0;
+    // 歩いている間だけコマを進める。止まったら待機画に戻し、次に歩き出す時は1コマ目から。
+    this.walkTime = state.moving ? this.walkTime + dt : 0;
+    const frame = state.moving ? WALK_CYCLE[Math.floor(this.walkTime / WALK_FRAME_SECONDS) % WALK_CYCLE.length] : 0;
+    this.sprite.material = this.girlFrames[frame];
+    // 脚がそろう待機画のコマでわずかに体が上がる。
+    this.girl.position.y = -2.85 + (state.moving && frame === 0 ? 0.03 : 0);
     this.gaps.forEach((gap) => { gap.visible = !state.repaired; });
     this.machinePanels.forEach((panel) => { panel.material = this.material(state.repaired ? '#7ba7b5' : '#668eaa', 1); });
     this.lamps.forEach((lamp) => { lamp.scale.setScalar(1 + Math.sin(time * 1.5) * 0.02); });
@@ -301,6 +316,7 @@ export class Street {
       }
     });
     this.materials.forEach((material) => materials.add(material));
+    this.girlFrames.forEach((material) => materials.add(material));
     materials.forEach((material) => material.dispose());
     this.textures.forEach((texture) => texture.dispose());
     this.renderer.dispose();
