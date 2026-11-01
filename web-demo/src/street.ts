@@ -1,7 +1,6 @@
 import * as THREE from 'three';
-import { DEMO } from './config.ts';
+import { DEMO, DRINKS } from './config.ts';
 import type { GameState } from './progression.ts';
-import { CAT_FROM_LOOP, SIGNS, fadedSigns } from './loopEcho.ts';
 // デザイナー（山口さん）の待機画と歩き差分2枚。?inline でJSに埋め込み、ダブルクリック版でも読めるようにする。
 // 3枚とも同じ枠（291x640、右向き）で切り出してあるので、差し替えても位置はずれない。
 import girlIdleUrl from './assets/girl-idle.png?inline';
@@ -12,7 +11,10 @@ import girlWalk2Url from './assets/girl-walk2.png?inline';
 const WALK_CYCLE = [1, 0, 2, 0] as const;
 const WALK_FRAME_SECONDS = 0.16;
 
-/** TEMP art: simple geometry and generated shop signs, no supplied concept art. */
+// PROTOTYPE: 店名はデモ用の仮。
+const SIGNS = ['喫茶  ポプラ', 'あおい商店', '中村書店', 'ひかり写真館', '中央通り商店街'];
+
+/** 現実の街（左の画面）。TEMP art: デザイナーの背景が届くまでの簡単な図形。 */
 export class Street {
   readonly renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
@@ -21,13 +23,7 @@ export class Street {
   private sprite!: THREE.Mesh;
   private girlFrames: THREE.MeshBasicMaterial[] = [];
   private walkTime = 0;
-  private tiles: THREE.Group[] = [];
-  private machinePanels: THREE.Mesh[] = [];
-  private gaps: THREE.Mesh[] = [];
   private lamps: THREE.Mesh[] = [];
-  private signs: { index: number; draw: (text: string) => void }[] = [];
-  private cats: THREE.Group[] = [];
-  private shownLoops = -1;
   private rain: THREE.LineSegments;
   private rainPositions: Float32Array;
   private width = 1;
@@ -48,13 +44,8 @@ export class Street {
     this.camera.position.z = 30;
     this.camera.near = 0.1;
     this.camera.far = 100;
-    for (const offset of [-DEMO.streetLength, 0, DEMO.streetLength]) {
-      const tile = this.makeStreet();
-      tile.position.x = offset;
-      this.scene.add(tile);
-      this.tiles.push(tile);
-    }
-    // The next area deliberately stays quiet and simple for this one-puzzle demo.
+    this.scene.add(this.makeStreet());
+    // 右端の先（次のステージへの道）は、まだ簡単な通路だけ。
     this.rect(this.scene, 33, -4.8, 70, 4, '#111f36', 0.1);
     this.rect(this.scene, 26, -2.8, 18, 0.12, '#77969c', 0.2, 0.4);
     this.label(this.scene, 'この先へ', 23, -1.3, 2, '#adc6ca', 1);
@@ -110,28 +101,21 @@ export class Street {
     return mesh;
   }
 
-  /** Returns a redraw function so loop echoes can rewrite shop signs in place. */
-  private label(parent: THREE.Object3D, text: string, x: number, y: number, width: number, color: string, z: number): (text: string) => void {
+  private label(parent: THREE.Object3D, text: string, x: number, y: number, width: number, color: string, z: number): void {
     const canvas = document.createElement('canvas');
     canvas.width = 512; canvas.height = 96;
     const context = canvas.getContext('2d')!;
+    context.fillStyle = color;
+    context.font = 'bold 36px "Yu Gothic UI", "Yu Gothic", "Hiragino Sans", "Noto Sans JP", Meiryo, sans-serif';
+    context.textAlign = 'center'; context.textBaseline = 'middle';
+    context.fillText(text, 256, 48);
     const texture = new THREE.CanvasTexture(canvas);
-    const draw = (value: string) => {
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      context.fillStyle = color;
-      context.font = 'bold 36px "Yu Gothic UI", "Yu Gothic", "Hiragino Sans", "Noto Sans JP", Meiryo, sans-serif';
-      context.textAlign = 'center'; context.textBaseline = 'middle';
-      context.fillText(value, 256, 48);
-      texture.needsUpdate = true;
-    };
-    draw(text);
     this.textures.push(texture);
     const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false });
     const geometry = new THREE.PlaneGeometry(width, width * 96 / 512);
     this.geometries.add(geometry);
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z); parent.add(mesh);
-    return draw;
   }
 
   private makeStreet(): THREE.Group {
@@ -159,7 +143,7 @@ export class Street {
       this.rect(root, shop.x, shop.h / 2 - 2.8, shop.w, shop.h, index % 2 ? '#1b3049' : '#1c2d47', 2);
       this.rect(root, shop.x, 0, shop.w - 0.25, 3.5, '#101f34', 2.2);
       this.rect(root, shop.x, 1.5, shop.w - 0.25, 0.7, '#263f58', 2.3);
-      this.signs.push({ index, draw: this.label(root, shop.sign, shop.x, 1.5, shop.w - 0.7, shop.color, 2.5) });
+      this.label(root, shop.sign, shop.x, 1.5, shop.w - 0.7, shop.color, 2.5);
       this.rect(root, shop.x, 0.94, shop.w + 0.1, 0.22, '#42637c', 2.4);
       this.rect(root, shop.x, -0.95, shop.w - 0.7, 3.1, '#23354c', 2.3);
       for (let row = 0; row < 15; row++) {
@@ -182,45 +166,47 @@ export class Street {
         0.3 + this.random(i + 50) * 2.5, 0.015 + this.random(i + 11) * 0.06, '#8ab5c6', 3.5, 0.13);
     }
     this.machine(root);
-    this.cats.push(this.makeCat(root));
+    this.pole(root);
+    this.manhole(root);
     return root;
   }
 
-  /** PROTOTYPE loop echo: the same black cat sits and stares at the machine. */
-  private makeCat(root: THREE.Group): THREE.Group {
-    const cat = new THREE.Group();
-    this.circle(cat, 0, 0.22, 0.27, '#070d1b', 0).scale.set(1.1, 0.95, 1);
-    this.circle(cat, 0.13, 0.55, 0.17, '#070d1b', 0.01);
-    for (const dx of [0.05, 0.22]) {
-      const ear = this.rect(cat, dx, 0.72, 0.09, 0.12, '#070d1b', 0.01);
-      ear.rotation.z = dx > 0.1 ? -0.4 : 0.4;
-    }
-    const tail = this.rect(cat, -0.33, 0.12, 0.38, 0.06, '#070d1b', 0);
-    tail.rotation.z = 0.5;
-    for (const dx of [0.12, 0.22]) this.circle(cat, dx, 0.57, 0.025, '#e9e1a6', 0.02);
-    cat.position.set(DEMO.machineX - 1.55, -2.85, 4.6);
-    cat.visible = false;
-    root.add(cat);
-    return cat;
-  }
-
   private machine(root: THREE.Group): void {
-    const x = DEMO.machineX;
+    const x = DEMO.objects.machine;
     this.rect(root, x, -1.35, 1.55, 2.95, '#0a1529', 4);
-    const panel = this.rect(root, x, -1.3, 1.42, 2.8, '#668eaa', 4.1);
-    this.machinePanels.push(panel);
+    this.rect(root, x, -1.3, 1.42, 2.8, '#6f97b3', 4.1);
     this.rect(root, x, -0.92, 1.17, 1.55, '#b8d9dd', 4.2);
-    for (let i = 0; i < 4; i++) {
-      const dx = x - 0.43 + i * 0.28;
-      this.rect(root, dx, -0.67, 0.15, 0.5, DEMO.drinks[i].color, 4.3);
-      this.rect(root, dx, -0.4, 0.16, 0.06, '#dfedef', 4.4);
-      this.rect(root, dx, -1.25, 0.14, 0.05, '#8fb5be', 4.4);
+    for (const [i, drink] of DRINKS.entries()) {
+      const dx = x - 0.4 + (i % 3) * 0.4;
+      const dy = i < 3 ? -0.55 : -1.15;
+      this.rect(root, dx, dy, 0.17, 0.42, drink.color, 4.3);
+      this.rect(root, dx, dy - 0.3, 0.18, 0.05, '#8fb5be', 4.4);
     }
     this.rect(root, x, -2.2, 0.65, 0.25, '#12263c', 4.3);
-    const gap = this.rect(root, x + 0.3, -1.6, 0.67, 0.95, '#d2d8d9', 4.5);
-    gap.rotation.z = -0.04; this.gaps.push(gap);
     this.rect(root, x, -3.7, 1.25, 1.3, '#8bc7d1', 3.6, 0.12);
     this.lamps.push(this.circle(root, x, -1, 2.5, '#8ecedc', 3.7, 0.06));
+  }
+
+  /** 電柱。上を通る電線は街の端までのばす。 */
+  private pole(root: THREE.Group): void {
+    const x = DEMO.objects.pole;
+    this.rect(root, x, 1.9, 0.32, 9.6, '#2a3748', 3.4);
+    this.rect(root, x, 5.6, 1.9, 0.14, '#33465a', 3.5);
+    for (const dx of [-0.75, 0, 0.75]) this.rect(root, x + dx, 5.75, 0.09, 0.18, '#9fb3bf', 3.6);
+    for (const dy of [5.82, 5.55]) this.rect(root, 0, dy, 36, 0.03, '#0a1220', 3.3);
+    this.rect(root, x, 0.6, 0.5, 0.75, '#c8b764', 3.5);
+    this.label(root, '中央1', x, 0.6, 0.7, '#2a2a20', 3.6);
+  }
+
+  /** 歩道の手前のマンホール。蓋が少しずれている。 */
+  private manhole(root: THREE.Group): void {
+    const x = DEMO.objects.manhole;
+    const lid = this.circle(root, x, -3.75, 0.85, '#3a4c62', 3.6);
+    lid.scale.y = 0.32;
+    const ring = this.circle(root, x, -3.75, 0.62, '#4f6680', 3.7);
+    ring.scale.y = 0.32;
+    const slip = this.circle(root, x + 0.18, -3.7, 0.3, '#22303f', 3.8);
+    slip.scale.y = 0.32;
   }
 
   private makeGirl(): void {
@@ -262,7 +248,13 @@ export class Street {
     this.renderer.setSize(this.width, this.height);
   }
 
-  render(state: GameState, time: number, dt: number): { x: number; y: number; scale: number } {
+  /** 街の座標（x, y）が画面のどこに映るか。調べるボタンをその位置に重ねるのに使う。 */
+  project(x: number, y: number): { x: number; y: number; scale: number } {
+    const point = new THREE.Vector3(x, y, 5).project(this.camera);
+    return { x: (point.x + 1) * this.width / 2, y: (1 - point.y) * this.height / 2, scale: this.pixelsPerUnit };
+  }
+
+  render(state: GameState, time: number, dt: number): void {
     this.camera.position.x = state.x;
     this.girl.position.x = state.x;
     this.girl.scale.x = state.facing;
@@ -272,17 +264,7 @@ export class Street {
     this.sprite.material = this.girlFrames[frame];
     // 脚がそろう待機画のコマでわずかに体が上がる。
     this.girl.position.y = -2.85 + (state.moving && frame === 0 ? 0.03 : 0);
-    this.gaps.forEach((gap) => { gap.visible = !state.repaired; });
-    this.machinePanels.forEach((panel) => { panel.material = this.material(state.repaired ? '#7ba7b5' : '#668eaa', 1); });
     this.lamps.forEach((lamp) => { lamp.scale.setScalar(1 + Math.sin(time * 1.5) * 0.02); });
-    if (state.loops !== this.shownLoops) {
-      this.shownLoops = state.loops;
-      const texts = fadedSigns(state.loops);
-      this.signs.forEach((sign) => sign.draw(texts[sign.index]));
-      this.cats.forEach((cat) => { cat.visible = state.loops >= CAT_FROM_LOOP; });
-    }
-    // After repair, only the original street remains. Its right-hand exit leads onward.
-    this.tiles.forEach((tile, index) => { tile.visible = !state.repaired || index === 1; });
     for (let i = 0; i < DEMO.rainCount; i++) {
       const p = i * 6;
       this.rainPositions[p] -= dt * 1.4;
@@ -298,10 +280,6 @@ export class Street {
     this.rain.geometry.attributes.position.needsUpdate = true;
     this.camera.updateMatrixWorld();
     this.renderer.render(this.scene, this.camera);
-    let machineX = DEMO.machineX;
-    if (!state.repaired) machineX += Math.round((state.x - machineX) / DEMO.streetLength) * DEMO.streetLength;
-    const point = new THREE.Vector3(machineX, -1.3, 5).project(this.camera);
-    return { x: (point.x + 1) * this.width / 2, y: (1 - point.y) * this.height / 2, scale: this.pixelsPerUnit };
   }
 
   dispose(): void {
