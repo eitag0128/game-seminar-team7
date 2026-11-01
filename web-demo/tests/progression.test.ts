@@ -60,16 +60,29 @@ test('stale narration callbacks do not skip steps', () => {
   assert.deepEqual(narrationDone(state, 'intro'), state);
 });
 
-test('the right edge blocks until the stage is solved, then leads on to the end', () => {
+test('the street loops at both ends until the stage is solved, then the right end leads on', () => {
   const edge = DEMO.streetLength / 2;
-  let state = move({ ...createGame(), x: edge - 0.01 }, 1, 0.05);
-  assert.equal(state.x, edge);
-  assert.equal(state.blocked, true);
-  assert.equal(state.phase, 'street');
-  state = { ...state, step: 'exit' };
+  for (const direction of [-1, 1]) {
+    const state = move({ ...createGame(), x: direction * (edge - 0.01) }, direction, 0.05);
+    assert.equal(state.loops, 1);
+    assert.equal(Math.sign(state.x), -direction, 'reappears at the other end');
+    assert.equal(state.phase, 'street');
+  }
+  // 解いた状態はループしても残る。
+  const looped = move({ ...createGame(), step: 'pole' as const, x: edge - 0.01 }, 1, 0.05);
+  assert.equal(looped.step, 'pole');
+  let state: GameState = { ...createGame(), step: 'exit', x: edge - 0.01 };
   for (let i = 0; i < 40; i++) state = move(state, 1, 0.05);
   assert.equal(state.phase, 'ending');
-  assert.equal(move({ ...createGame(), x: -edge }, -1, 0.05).x, -edge, 'the left edge is a wall');
+  assert.equal(state.loops, 0);
+  assert.equal(move({ ...createGame(), step: 'exit' as const, x: -edge }, -1, 0.05).x, -edge, 'after solving, the left end is a wall');
+});
+
+test('objects are near across the loop seam', () => {
+  const state = { ...createGame(), step: 'manhole' as const, x: -DEMO.streetLength / 2 + 0.5 };
+  // マンホールは x=10。端をまたいだ距離で測るので、左端の近くからは遠い。右端の近くからは近い。
+  assert.equal(canInspect(state, 'manhole'), false);
+  assert.equal(canInspect({ ...state, x: DEMO.objects.manhole - DEMO.streetLength + 1 }, 'manhole'), true);
 });
 
 test('long frame gaps are clamped', () => {

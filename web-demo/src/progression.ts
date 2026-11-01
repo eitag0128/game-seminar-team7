@@ -20,12 +20,12 @@ export interface GameState {
   phase: Phase;
   /** 頭の中の缶から出した黄色い粒の数（ヒント。進行には必要ない）。 */
   grains: number;
-  /** 謎を解く前に右端に着いた（main.ts が一言出すのに使う）。 */
-  blocked: boolean;
+  /** 街の端から反対側へ戻った回数（仕様書「何度進んでも同じところに帰って来てしまう」）。 */
+  loops: number;
 }
 
 export function createGame(): GameState {
-  return { x: DEMO.startX, facing: 1, moving: false, step: 'intro', phase: 'street', grains: 0, blocked: false };
+  return { x: DEMO.startX, facing: 1, moving: false, step: 'intro', phase: 'street', grains: 0, loops: 0 };
 }
 
 /** 今の段階で、現実の街で調べられる物。 */
@@ -38,8 +38,10 @@ export function activeObject(state: GameState): ObjectId | null {
   }
 }
 
+/** 街は輪になっているので、端をまたいだ近さも測る。 */
 export function nearObject(state: GameState, id: ObjectId): boolean {
-  return Math.abs(state.x - DEMO.objects[id]) <= DEMO.interactionDistance;
+  const distance = Math.abs(state.x - DEMO.objects[id]);
+  return Math.min(distance, DEMO.streetLength - distance) <= DEMO.interactionDistance;
 }
 
 export function canInspect(state: GameState, id: ObjectId): boolean {
@@ -90,19 +92,23 @@ export function narrationDone(state: GameState, step: Step): GameState {
 export function move(state: GameState, direction: number, seconds: number): GameState {
   if (state.phase !== 'street' && state.phase !== 'beyond') return state;
   const input = Math.sign(direction);
-  const next = { ...state, moving: input !== 0, facing: input || state.facing, blocked: false };
+  const next = { ...state, moving: input !== 0, facing: input || state.facing };
   next.x += input * DEMO.walkSpeed * Math.max(0, Math.min(seconds, 0.05));
   const edge = DEMO.streetLength / 2;
-  next.x = Math.max(-edge, next.x);
   if (state.step === 'exit') {
+    // 謎を3つ解いた後はループが止まる。左端は壁、右端から先へ出られる。
+    next.x = Math.max(-edge, next.x);
     next.phase = next.x > edge ? 'beyond' : 'street';
     if (next.x >= edge + DEMO.nextAreaDistance) {
       next.phase = 'ending';
       next.moving = false;
     }
   } else if (next.x > edge) {
-    next.x = edge;
-    next.blocked = input > 0;
+    next.x -= DEMO.streetLength;
+    next.loops++;
+  } else if (next.x < -edge) {
+    next.x += DEMO.streetLength;
+    next.loops++;
   }
   return next;
 }

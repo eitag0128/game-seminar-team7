@@ -57,7 +57,7 @@ app.innerHTML = `
       <li><strong>調べる</strong><p>物に近づいて「調べる」が出たら、<span class="for-keys">クリック</span><span class="for-touch">タップ</span>します。</p></li>
       <li><strong>頭の中</strong><p>右に出る文は、<span class="for-keys">クリック</span><span class="for-touch">タップ</span>すると次へ進みます。<br>頭の中の缶なども<span class="for-keys">クリック</span><span class="for-touch">タップ</span>できます。<b>電線の先はドラッグ</b>して動かします。</p></li>
     </ol>
-    <p class="guide-after">謎を3つ解くと、街の右端から先へ進めます。迷ったら、左の画面に出る案内を見てください。<br>この説明は画面下の「遊び方」でもう一度見られます。<span class="for-touch"><br>スマホは横向きにすると見やすくなります。</span></p>
+    <p class="guide-after">この街は、端まで歩くと元の場所に戻ってしまいます。謎を3つ解くと、右端から先へ進めます。迷ったら、左の画面に出る案内を見てください。<br>この説明は画面下の「遊び方」でもう一度見られます。<span class="for-touch"><br>スマホは横向きにすると見やすくなります。</span></p>
     <div class="start-choices">
       <button id="start-walking" class="text-button">音ありではじめる <span aria-hidden="true">→</span></button>
       <button id="start-walking-silent" class="text-button quiet">音なしではじめる</button>
@@ -230,7 +230,8 @@ function update(next: GameState): void {
   }
   sound.setDimmed(state.phase === 'vending' || state.phase === 'slide');
   brain.setStep(state.step);
-  if (state.blocked && !before.blocked) whisper('まだ先には進めない気がする。', 3000);
+  app.dataset.loops = String(state.loops);
+  if (state.loops > before.loops) whisper(state.loops === 1 ? 'あれ、さっきの場所に戻ってる。' : 'またここに戻ってきた。', 3500);
   if (before.phase !== 'ending' && state.phase === 'ending') play('warp');
 }
 

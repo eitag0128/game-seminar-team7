@@ -24,6 +24,8 @@ export class Street {
   private girlFrames: THREE.MeshBasicMaterial[] = [];
   private walkTime = 0;
   private lamps: THREE.Mesh[] = [];
+  private tiles: THREE.Group[] = [];
+  private exitPath = new THREE.Group();
   private rain: THREE.LineSegments;
   private rainPositions: Float32Array;
   private width = 1;
@@ -44,11 +46,18 @@ export class Street {
     this.camera.position.z = 30;
     this.camera.near = 0.1;
     this.camera.far = 100;
-    this.scene.add(this.makeStreet());
-    // 右端の先（次のステージへの道）は、まだ簡単な通路だけ。
-    this.rect(this.scene, 33, -4.8, 70, 4, '#111f36', 0.1);
-    this.rect(this.scene, 26, -2.8, 18, 0.12, '#77969c', 0.2, 0.4);
-    this.label(this.scene, 'この先へ', 23, -1.3, 2, '#adc6ca', 1);
+    // 謎を解くまでは街が輪になっているので、同じ街を左右にも並べて継ぎ目を見せない。
+    for (const offset of [-DEMO.streetLength, 0, DEMO.streetLength]) {
+      const tile = this.makeStreet();
+      tile.position.x = offset;
+      this.scene.add(tile);
+      this.tiles.push(tile);
+    }
+    // 右端の先（次のステージへの道）は、まだ簡単な通路だけ。謎を3つ解くまでは見せない。
+    this.rect(this.exitPath, 33, -4.8, 70, 4, '#111f36', 0.1);
+    this.rect(this.exitPath, 26, -2.8, 18, 0.12, '#77969c', 0.2, 0.4);
+    this.label(this.exitPath, 'この先へ', 23, -1.3, 2, '#adc6ca', 1);
+    this.scene.add(this.exitPath);
     this.makeGirl();
     this.scene.add(this.girl);
     this.rainPositions = new Float32Array(DEMO.rainCount * 6);
@@ -248,9 +257,13 @@ export class Street {
     this.renderer.setSize(this.width, this.height);
   }
 
-  /** 街の座標（x, y）が画面のどこに映るか。調べるボタンをその位置に重ねるのに使う。 */
+  /**
+   * 街の座標（x, y）が画面のどこに映るか。調べるボタンをその位置に重ねるのに使う。
+   * 街は輪になっているので、並べた3つの街のうち少女に一番近い物の位置を返す。
+   */
   project(x: number, y: number): { x: number; y: number; scale: number } {
-    const point = new THREE.Vector3(x, y, 5).project(this.camera);
+    const nearest = x + Math.round((this.camera.position.x - x) / DEMO.streetLength) * DEMO.streetLength;
+    const point = new THREE.Vector3(nearest, y, 5).project(this.camera);
     return { x: (point.x + 1) * this.width / 2, y: (1 - point.y) * this.height / 2, scale: this.pixelsPerUnit };
   }
 
@@ -265,6 +278,10 @@ export class Street {
     // 脚がそろう待機画のコマでわずかに体が上がる。
     this.girl.position.y = -2.85 + (state.moving && frame === 0 ? 0.03 : 0);
     this.lamps.forEach((lamp) => { lamp.scale.setScalar(1 + Math.sin(time * 1.5) * 0.02); });
+    // 謎を3つ解くとループが止まる。両隣の街を消して、右端の先の通路を見せる。
+    const open = state.step === 'exit';
+    this.tiles.forEach((tile, index) => { tile.visible = !open || index === 1; });
+    this.exitPath.visible = open;
     for (let i = 0; i < DEMO.rainCount; i++) {
       const p = i * 6;
       this.rainPositions[p] -= dt * 1.4;

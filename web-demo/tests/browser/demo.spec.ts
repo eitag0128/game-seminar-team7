@@ -25,14 +25,16 @@ test('PC: guide, the three puzzles in order, sounds, stage clear and replay', as
   expect(errors).toEqual([]);
 });
 
-test('right edge is closed before the puzzles are solved; sound off works; guide reopens', async ({ page }) => {
+test('the street loops before the puzzles are solved; sound off works; guide reopens', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: '音なしではじめる' }).click();
   await expect(page.locator('#app')).toHaveAttribute('data-sound', 'off');
   const walker = keyboard(page);
   await readUntil(page, walker, 'machine');
-  await walker.walk(1, () => expect(page.locator('#thought')).toHaveText('まだ先には進めない気がする。', { timeout: 20000 }));
+  await walker.walk(1, () => expect(page.locator('#app')).toHaveAttribute('data-loops', '1', { timeout: 20000 }));
+  await expect(page.locator('#thought')).toHaveText('あれ、さっきの場所に戻ってる。');
   await expect(page.locator('#app')).toHaveAttribute('data-phase', 'street');
+  await page.screenshot({ path: 'test-results/pc-looped.png' });
   await page.getByRole('button', { name: '遊び方', exact: true }).click();
   await expect(page.getByRole('button', { name: '音なしではじめる' })).toBeHidden();
   await page.getByRole('button', { name: 'ゲームに戻る' }).click();
