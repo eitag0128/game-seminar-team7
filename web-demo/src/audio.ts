@@ -15,6 +15,10 @@ export type SoundCue = 'select' | 'step' | 'correct' | 'wrong' | 'vending' | 'wa
 const FILES = { select: selectUrl, step: stepUrl, correct: correctUrl, wrong: wrongUrl, vending: vendingUrl, warp: warpUrl } as const;
 // 素材ごとの音量。足音は歩くたびに鳴るので小さめ。
 const LEVELS: Record<SoundCue, number> = { select: 0.6, step: 0.35, correct: 0.8, wrong: 0.7, vending: 0.8, warp: 0.8, shock: 0.12 };
+// 素材の一部だけを鳴らす時の [開始秒, 長さ秒]。
+// 自販機.mp3 は13.7秒で、自販機の音が5回分入っている。1回目の「ピッピッピッ」（0.1〜0.7秒）は鳴らさず、
+// 缶が落ちる音（0.85〜1.5秒、波形から判断）だけを使う。本人の指摘「3回ピッピッピッって鳴ってる、くどい」。
+const CLIPS: Partial<Record<SoundCue, [number, number]>> = { vending: [0.85, 0.65] };
 
 function decodeDataUrl(url: string): ArrayBuffer {
   const binary = atob(url.slice(url.indexOf(',') + 1));
@@ -89,7 +93,9 @@ export class Sound {
     const gain = context.createGain();
     gain.gain.value = LEVELS[cue];
     source.connect(gain).connect(this.output);
-    source.start();
+    const clip = CLIPS[cue];
+    if (clip) source.start(context.currentTime, clip[0], clip[1]);
+    else source.start();
   }
 
   /** 感電の「ビリビリ」。のこぎり波を細かく震わせる。 */
