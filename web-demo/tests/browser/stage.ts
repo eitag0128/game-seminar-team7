@@ -31,6 +31,14 @@ export const touch = (page: Page): Walker => ({
   press: (target) => target.tap(),
 });
 
+/** タイトルの「はじめる」を押して、遊び方を出す。 */
+export async function openTitle(page: Page, walker?: Walker): Promise<void> {
+  await expect(page.getByRole('region', { name: 'タイトル' })).toBeVisible();
+  const start = page.getByRole('button', { name: 'はじめる', exact: true });
+  if (walker) await walker.press(start); else await start.click();
+  await expect(page.getByRole('dialog', { name: '遊び方' })).toBeVisible();
+}
+
 export async function step(page: Page): Promise<string | null> {
   return page.locator('#app').getAttribute('data-step');
 }
@@ -73,6 +81,9 @@ export async function playStage(page: Page, walker: Walker, shots = ''): Promise
   await expect(page.locator('#app')).toHaveAttribute('data-grains', '4');
   await page.waitForTimeout(600);
   await shot('grains');
+  // 頭の中から街に戻って、自販機で飲み物を選ぶ。
+  await walker.press(page.getByRole('button', { name: '街に戻る' }));
+  await expect(page.locator('#app')).toHaveAttribute('data-view', 'street');
 
   await walker.press(page.getByRole('button', { name: '自販機を調べる' }));
   await expect(page.locator('#vending')).toBeVisible();
@@ -110,6 +121,44 @@ export async function playStage(page: Page, walker: Walker, shots = ''): Promise
   await shot('shocked');
   await readUntil(page, walker, 'exit');
   await walker.walk(1, () => expect(page.locator('#app')).toHaveAttribute('data-phase', 'ending', { timeout: 30000 }));
-  await expect(page.getByRole('dialog', { name: 'ステージ1 クリア' })).toBeVisible();
+  await expect(page.locator('#app')).toHaveAttribute('data-scene', 'event');
+  await shot('event');
+}
+
+/** 話の文をクリック/タップで読み進め、done が見えるまで待つ。 */
+async function readSceneUntil(page: Page, walker: Walker, done: Locator): Promise<void> {
+  const line = page.locator('#scene .subtitle');
+  for (let i = 0; i < 30 && !(await done.isVisible()); i++) {
+    if (await line.isVisible()) await walker.press(line);
+    await page.waitForTimeout(250);
+  }
+  await expect(done).toBeVisible();
+}
+
+/** ステージ1の後の話（仮）。follow なら友達を追いかけて公園へ、そうでなければ帰る。 */
+export async function playStory(page: Page, walker: Walker, follow: boolean, shots = ''): Promise<void> {
+  const shot = async (name: string) => { if (shots) await page.screenshot({ path: `test-results/${shots}-${name}.png` }); };
+  const cat = page.getByRole('button', { name: '猫', exact: true });
+  await readSceneUntil(page, walker, cat);
+  await expect(page.locator('#app')).toHaveAttribute('data-scene', 'alley');
+  await shot('alley');
+  for (let i = 0; i < 3; i++) {
+    await walker.press(cat);
+    await page.waitForTimeout(600);
+  }
+  const choice = page.getByRole('button', { name: follow ? '追いかける' : '何も見なかったことにして帰る' });
+  await readSceneUntil(page, walker, choice);
+  await shot('choice');
+  await walker.press(choice);
+  if (follow) {
+    const board = page.locator('#scene .slide-board');
+    await readSceneUntil(page, walker, board);
+    await expect(page.locator('#app')).toHaveAttribute('data-scene', 'park');
+    await shot('park');
+    for (const index of [1, 4, 5, 8]) await walker.press(board.locator(`[data-index="${index}"]`));
+  }
+  const ending = page.getByRole('dialog', { name: follow ? 'エンディング1 仲直り' : 'エンディング2 何も変わらない' });
+  await readSceneUntil(page, walker, ending);
+  await expect(page.locator('#app')).toHaveAttribute('data-ending', follow ? 'friend' : 'home');
   await shot('ending');
 }

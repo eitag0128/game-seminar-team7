@@ -6,14 +6,14 @@ button:focus-visible { outline: 2px solid #d7e6c7; outline-offset: 4px; }
 button:disabled { cursor: default; }
 [hidden] { display: none !important; }
 
-/* 左: 現実の街 / 右: 頭の中（プランナー「1画面にした方がテンポ良くない？」）。縦長の画面では上下に並べる。 */
-#app { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); width: 100vw; height: 100dvh; min-height: 360px; overflow: hidden; touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
-.pane { position: relative; overflow: hidden; min-height: 0; }
-.brain { border-left: 2px solid #050a19; }
-@media (max-aspect-ratio: 1/1) {
-  #app { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
-  .brain { border-left: 0; border-top: 2px solid #050a19; }
-}
+/* 1画面。街と頭の中を切り替える（11/2 さりーさん「適宜現実と脳内画面を切り替えの方が？」）。
+   頭の中は、少女の頭のあたり（--hx, --hy）から円が広がって現れる。 */
+#app { position: relative; width: 100vw; height: 100dvh; min-height: 320px; overflow: hidden; touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+.pane { position: absolute; inset: 0; overflow: hidden; }
+.brain { z-index: 2; clip-path: circle(0 at var(--hx, 50%) var(--hy, 50%)); transition: clip-path 0.7s ease-in-out, visibility 0s 0.7s; visibility: hidden; }
+#app[data-view="head"] .brain { clip-path: circle(150vmax at var(--hx, 50%) var(--hy, 50%)); transition: clip-path 0.7s ease-in-out; visibility: visible; }
+.scene { z-index: 3; background: #0b142c; animation: scene-in 0.8s ease-out; }
+@keyframes scene-in { from { opacity: 0; } }
 
 /* 現実の街 */
 .street { position: absolute; inset: 0; }
@@ -26,11 +26,12 @@ h1 { margin: 0; font-size: clamp(22px, 2.6vw, 36px); font-weight: 700; line-heig
 .inspect-target > span { position: absolute; left: 50%; top: -30px; transform: translateX(-50%); width: max-content; padding: 3px 8px; font-size: 13px; color: #0b142c; background: #f0e4bc; border-radius: 3px; opacity: 0; transition: opacity 0.3s; }
 .inspect-target.near > span { opacity: 1; }
 .inspect-target.near:hover { outline: 1px solid #f0e4bc88; }
-.thought { position: absolute; left: 8px; right: 8px; top: 30%; margin: 0; text-align: center; pointer-events: none; font-size: 15px; color: #e0ecef; opacity: 0; transition: opacity 0.6s; text-shadow: 0 2px 8px #020817; }
+.thought { z-index: 5; position: absolute; left: 8px; right: 8px; top: 30%; margin: 0; text-align: center; pointer-events: none; font-size: 15px; color: #e0ecef; opacity: 0; transition: opacity 0.6s; text-shadow: 0 2px 8px #020817; }
 .thought.visible { opacity: 1; }
-.next-action { position: absolute; bottom: 64px; left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100% - 24px); padding: 8px 14px; margin: 0; background: #091629e8; border-left: 2px solid #9dbfc8; font: 14px/1.6 var(--ui-font); color: #e0edf0; text-align: center; pointer-events: none; }
-.controls { position: absolute; bottom: 14px; left: 16px; right: 16px; display: flex; align-items: center; gap: 12px; color: #8096aa; font: 12px/1.6 var(--ui-font); pointer-events: none; }
-.controls small { margin-left: auto; font-size: 11px; color: #72859a; }
+.next-action { z-index: 5; position: absolute; bottom: 64px; left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100% - 24px); padding: 8px 14px; margin: 0; background: #091629e8; border-left: 2px solid #9dbfc8; font: 14px/1.6 var(--ui-font); color: #e0edf0; text-align: center; pointer-events: none; }
+.controls { z-index: 6; position: absolute; top: 12px; right: 12px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; pointer-events: none; }
+.view-toggle { border-color: #f0e4bc; color: #f0e4bc; }
+#app[data-view="head"] .next-action, #app[data-scene] .next-action { top: 56px; bottom: auto; }
 .help-button { pointer-events: auto; border: 1px solid #8ba4b5; background: #102237cc; padding: 6px 12px; font: 13px/1.4 var(--ui-font); }
 .help-button:hover { background: #2a4258; }
 kbd { font: 12px/1.6 var(--ui-font); display: inline-block; border: 1px solid #74899e55; padding: 0 4px; margin-right: 3px; border-radius: 2px; }
@@ -42,14 +43,13 @@ kbd { font: 12px/1.6 var(--ui-font); display: inline-block; border: 1px solid #7
 .touch-move.right { right: 10px; }
 .touch-move.held { background: #2a4258e6; }
 [data-input="touch"] .touch-move { display: block; }
-[data-input="touch"] .controls { left: 50%; right: auto; bottom: calc(26px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: max-content; }
-[data-input="touch"] .controls small { display: none; }
 [data-input="touch"] .next-action { top: 58px; bottom: auto; font-size: 13px; }
 
 /* 頭の中（仮の絵）。缶・粒・電線などの位置は、この画面に対する % / cq 単位で置く。 */
 .brain-scene { position: absolute; inset: 0; container-type: size; overflow: hidden; background: #151c4a; }
-.collage { position: absolute; inset: 0; width: 100%; height: 100%; }
-.art-note { position: absolute; top: 10px; right: 12px; padding: 2px 8px; font-size: 11px; color: #f2efe6; background: #0008; border-radius: 3px; }
+/* 仮の絵。パステルが強すぎるという意見（11/2）があったので、色を少し落とす。 */
+.collage { position: absolute; inset: 0; width: 100%; height: 100%; filter: saturate(0.6) brightness(0.8); }
+.art-note { position: absolute; top: 12px; left: 12px; padding: 2px 8px; font-size: 11px; color: #f2efe6; background: #0008; border-radius: 3px; }
 .pool { position: absolute; left: 12%; width: 76%; bottom: 7%; height: 30%; border-radius: 50%; background: #0b1435cc; box-shadow: inset 0 0 0 3px #f2efe633; overflow: hidden; }
 .water { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(ellipse at 50% 40%, #6fb7e8, #2d5fae 70%); transform-origin: 50% 100%; transition: transform 1.6s ease, filter 0.8s; }
 .poured .water { background: radial-gradient(ellipse at 40% 40%, #ffd36b, #ff6fa8 35%, #7b6cf0 60%, #2d8fd0 85%); }
@@ -105,6 +105,36 @@ kbd { font: 12px/1.6 var(--ui-font); display: inline-block; border: 1px solid #7
 .narrating .subtitle::after { content: ' ▼'; font-size: 0.7em; color: #f0e4bc; }
 .subtitle.line-in { animation: line-in 0.5s ease-out; }
 @keyframes line-in { from { opacity: 0; transform: translate(-50%, 6px); } }
+
+/* タイトル */
+.title-screen { position: fixed; inset: 0; z-index: 20; display: grid; place-content: center; justify-items: center; text-align: center; background: radial-gradient(ellipse at 50% 40%, #1b2a52, #070d1f 75%); }
+.title-screen h1 { font-size: clamp(48px, 10vw, 96px); letter-spacing: 0.08em; }
+.title-screen p { margin: 14px 0 0; color: #8fa6b8; font-size: 14px; }
+.title-screen .text-button { margin-top: 36px; font-size: 16px; }
+
+/* ステージ1の後の話（仮） */
+.scene-art, .scene-art svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.scene-stage { position: absolute; inset: 0; }
+.scene .subtitle { z-index: 2; bottom: 6%; }
+.scene.narrating .subtitle { opacity: 1; }
+.scene.narrating .subtitle::after { content: ' ▼'; font-size: 0.7em; color: #f0e4bc; }
+.scene-choices { position: absolute; left: 0; right: 0; bottom: 10%; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 40px; }
+.scene-choices .text-button { font-size: 16px; background: #050a19cc; padding: 12px 18px; }
+/* 人影（仮）。友達。 */
+.scene-figure { position: absolute; bottom: 20%; width: 7vmin; height: 22vmin; margin-left: -3.5vmin; border-radius: 3.5vmin 3.5vmin 1vmin 1vmin; background: #2c3550; box-shadow: 0 0 0 2px #8aa0b855; }
+.scene-figure::before { content: ''; position: absolute; left: 50%; top: -6vmin; width: 6vmin; height: 6vmin; margin-left: -3vmin; border-radius: 50%; background: #2c3550; box-shadow: 0 0 0 2px #8aa0b855; }
+.scene-figure.friend-walk { animation: walk-by 3.2s linear forwards; }
+@keyframes walk-by { from { left: -10%; } to { left: 110%; } }
+.scene-cat { position: absolute; width: 9vmin; height: 6vmin; margin: -3vmin -4.5vmin; border: 0; border-radius: 50% 50% 40% 40%; background: #f2efe6; transition: left 0.5s ease-out, top 0.5s ease-out; animation: pulse 1.4s ease-in-out infinite; }
+.scene-cat::before, .scene-cat::after { content: ''; position: absolute; top: -1.6vmin; border-bottom: 2vmin solid #f2efe6; border-left: 1.2vmin solid transparent; border-right: 1.2vmin solid transparent; }
+.scene-cat::before { left: 0.8vmin; }
+.scene-cat::after { right: 0.8vmin; }
+.scene-cat.meow .bubble { animation: meow 1s ease-out; }
+@keyframes meow { 0%, 70% { opacity: 1; } }
+.scene-puzzle { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 14px 18px; background: #102237f0; border: 1px solid #4c687d; max-width: calc(100% - 24px); }
+.scene-puzzle .dialog-note { margin: 0; max-width: 340px; }
+.scene-puzzle .slide-board { width: min(260px, 60vw, 48dvh); margin-top: 10px; }
+.ending-note { font-size: 12px !important; color: #7f95a6 !important; margin-top: 18px; }
 
 /* ダイアログ */
 dialog { color: #cfdee1; background: #102237; border: 1px solid #4c687d; padding: 28px 32px; box-shadow: 0 20px 100px #020712aa; max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); }

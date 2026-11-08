@@ -4,13 +4,14 @@ import type { DrinkId, ObjectId } from './config.ts';
 import {
   activeObject, chooseDrink, clickCan, closeDialog, createGame, dropWire, inspect, move, narrationDone, nearObject, solveManhole,
 } from './progression.ts';
-import type { GameState } from './progression.ts';
+import type { GameState, Step } from './progression.ts';
 import { Street } from './street.ts';
 import { Sound } from './audio.ts';
 import { Brain } from './brain.ts';
 import { START, isSolved, movable, slideTile } from './slide.ts';
 import type { Board } from './slide.ts';
-import { WRONG_DRINK } from './story.ts';
+import { ENDINGS, STORY, WRONG_DRINK } from './story.ts';
+import { Scenes } from './scenes.ts';
 
 const OBJECTS: ObjectId[] = ['machine', 'pole', 'manhole'];
 const OBJECT_NAMES: Record<ObjectId, string> = { machine: '自販機', pole: '電柱', manhole: 'マンホール' };
@@ -40,24 +41,29 @@ app.innerHTML = `
   <section id="reality" class="pane reality" aria-label="現実の街">
     <div id="street" class="street"></div>
     <div class="vignette" aria-hidden="true"></div>
-    <header class="masthead"><h1>Puzzle</h1><p>ステージ1 · 中央通り商店街</p></header>
+    <header class="masthead"><h1>Puzzle</h1><p>ステージ1 · 中央通り商店街 · 7班 仮素材デモ</p></header>
     ${OBJECTS.map((id) => `<button id="inspect-${id}" class="inspect-target" aria-label="${OBJECT_NAMES[id]}を調べる" hidden><span><span class="for-keys">クリック</span><span class="for-touch">タップ</span>して調べる</span></button>`).join('')}
-    <p id="thought" class="thought" role="status"></p>
-    <p id="next-action" class="next-action" role="status"></p>
     <button id="touch-left" class="touch-move left" aria-label="左へ歩く">◀</button>
     <button id="touch-right" class="touch-move right" aria-label="右へ歩く">▶</button>
-    <footer class="controls"><span class="for-keys"><kbd>←</kbd><kbd>→</kbd> / <kbd>A</kbd><kbd>D</kbd> 歩く</span><button id="show-guide" class="help-button">遊び方</button><button id="sound-toggle" class="help-button" aria-pressed="true">音 オン</button><small>7班 · 仮素材デモ</small></footer>
   </section>
   <section id="brain" class="pane brain" aria-label="頭の中"></section>
+  <section id="scene" class="pane scene" hidden></section>
+  <p id="thought" class="thought" role="status"></p>
+  <p id="next-action" class="next-action" role="status"></p>
+  <nav class="controls"><button id="view-toggle" class="help-button view-toggle">頭の中を見る</button><button id="show-guide" class="help-button">遊び方</button><button id="sound-toggle" class="help-button" aria-pressed="true">音 オン</button></nav>
+  <section id="title" class="title-screen" aria-label="タイトル">
+    <h1>Puzzle</h1><p>7班 · 中間発表に向けた仮版</p>
+    <button id="title-start" class="text-button">はじめる <span aria-hidden="true">→</span></button>
+  </section>
   <dialog id="guide" class="guide-dialog" aria-labelledby="guide-title">
     <h2 id="guide-title">遊び方</h2>
-    <p class="guide-goal">左が現実の街、右が少女の頭の中です。現実で物を調べると頭の中が変わり、頭の中で起きたことが、次に調べる物の手がかりになります。</p>
+    <p class="guide-goal">少女が夜の商店街を歩きます。物を調べると、少女の頭の中の画面に切り替わります。頭の中で起きたことが、次に調べる物の手がかりになります。</p>
     <ol class="guide-steps">
-      <li><strong>歩く</strong><p><span class="for-keys"><kbd>←</kbd><kbd>→</kbd> または <kbd>A</kbd><kbd>D</kbd> で左右に移動します。</span><span class="for-touch">左の画面の下にある ◀ ▶ を押している間、左右に歩きます。</span></p></li>
+      <li><strong>歩く</strong><p><span class="for-keys"><kbd>←</kbd><kbd>→</kbd> または <kbd>A</kbd><kbd>D</kbd> で左右に移動します。</span><span class="for-touch">画面の下の ◀ ▶ を押している間、左右に歩きます。</span></p></li>
       <li><strong>調べる</strong><p>物に近づいて「調べる」が出たら、<span class="for-keys">クリック</span><span class="for-touch">タップ</span>します。</p></li>
-      <li><strong>頭の中</strong><p>右に出る文は、<span class="for-keys">クリック</span><span class="for-touch">タップ</span>すると次へ進みます。<br>頭の中の缶なども<span class="for-keys">クリック</span><span class="for-touch">タップ</span>できます。<b>電線の先はドラッグ</b>して動かします。</p></li>
+      <li><strong>頭の中</strong><p>頭の中に出る文は、<span class="for-keys">クリック</span><span class="for-touch">タップ</span>すると次へ進みます。<br>頭の中の缶なども<span class="for-keys">クリック</span><span class="for-touch">タップ</span>できます。<b>電線の先はドラッグ</b>して動かします。<br>用が済むと街に戻ります。右上の「頭の中を見る」でも切り替えられます。</p></li>
     </ol>
-    <p class="guide-after">この街は、端まで歩くと元の場所に戻ってしまいます。謎を3つ解くと、右端から先へ進めます。迷ったら、左の画面に出る案内を見てください。<br>この説明は画面下の「遊び方」でもう一度見られます。<span class="for-touch"><br>スマホは横向きにすると見やすくなります。</span></p>
+    <p class="guide-after">この街は、端まで歩くと元の場所に戻ってしまいます。謎を3つ解くと、右端から先の話（仮）へ進みます。迷ったら、画面に出る案内を見てください。<br>この説明は画面下の「遊び方」でもう一度見られます。<span class="for-touch"><br>スマホは横向きにすると見やすくなります。</span></p>
     <div class="start-choices">
       <button id="start-walking" class="text-button">音ありではじめる <span aria-hidden="true">→</span></button>
       <button id="start-walking-silent" class="text-button quiet">音なしではじめる</button>
@@ -75,8 +81,9 @@ app.innerHTML = `
     <div id="slide-board" class="slide-board" style='--manhole:${manholeArt()}'></div>
   </dialog>
   <dialog id="ending" class="ending-dialog" aria-labelledby="ending-title">
-    <h2 id="ending-title">ステージ1 クリア</h2>
-    <p>この先（ステージ2）はまだ作っていません。</p>
+    <h2 id="ending-title"></h2>
+    <p id="ending-text"></p>
+    <p class="ending-note">ステージ1の後の話は、さりー案（11/2）をもとにした仮の流れです。絵・文・遊びは全部仮です。</p>
     <button id="restart" class="text-button">もう一度遊ぶ <span aria-hidden="true">↺</span></button>
   </dialog>
   <section id="error" class="error" role="alert" hidden><h2>街を表示できませんでした</h2><p>WebGLが使えるブラウザで開いてください。</p><button id="reload" class="text-button">再読み込み</button></section>
@@ -93,6 +100,10 @@ const vendingComment = $<HTMLElement>('#vending-comment');
 const slide = $<HTMLDialogElement>('#slide');
 const slideBoard = $<HTMLElement>('#slide-board');
 const ending = $<HTMLDialogElement>('#ending');
+const reality = $<HTMLElement>('#reality');
+const brainHost = $<HTMLElement>('#brain');
+const viewToggle = $<HTMLButtonElement>('#view-toggle');
+const title = $<HTMLElement>('#title');
 const error = $<HTMLElement>('#error');
 const soundToggle = $<HTMLButtonElement>('#sound-toggle');
 const targets = Object.fromEntries(OBJECTS.map((id) => [id, $<HTMLButtonElement>(`#inspect-${id}`)])) as Record<ObjectId, HTMLButtonElement>;
@@ -108,6 +119,22 @@ let stepTimer = 0;
 let introStarted = false;
 let disposed = false;
 const keys = new Set<string>();
+
+// 1画面で、街と頭の中を切り替える（11/2 さりーさん「2画面の意味があまりない、適宜切り替えの方が？」）。
+// 頭の中で文を読む・操作する段階に入ると頭の中へ、終わると街へ戻る。
+const HEAD_STEPS = new Set<Step>(['intro', 'choose', 'pour', 'drained', 'flooded', 'wire', 'shocked']);
+// 自分で街と頭の中を行き来してよい段階（文や操作の途中ではない）。
+const FREE_STEPS = new Set<Step>(['machine', 'choose', 'manhole', 'pole', 'exit']);
+let headView = false;
+// ステージ1の後の話の最中に、画面に出す案内。
+let storyHint = '';
+function setView(head: boolean): void {
+  headView = head;
+  keys.clear();
+  app.dataset.view = head ? 'head' : 'street';
+  reality.inert = head;
+  brainHost.inert = !head;
+}
 
 function whisper(text: string, duration = 4000): void {
   thought.textContent = text;
@@ -150,7 +177,7 @@ function bindHold(button: HTMLButtonElement, code: string): void {
   const release = () => { keys.delete(code); button.classList.remove('held'); };
   button.addEventListener('pointerdown', (event) => {
     event.preventDefault();
-    if (guide.open || (state.phase !== 'street' && state.phase !== 'beyond')) return;
+    if (guide.open || headView || (state.phase !== 'street' && state.phase !== 'beyond')) return;
     try { button.setPointerCapture(event.pointerId); } catch { /* 指が外れても pointerup で止まる */ }
     keys.add(code);
     button.classList.add('held');
@@ -161,7 +188,7 @@ function bindHold(button: HTMLButtonElement, code: string): void {
 bindHold(touchButtons[0], 'TouchLeft');
 bindHold(touchButtons[1], 'TouchRight');
 
-const brain = new Brain($<HTMLElement>('#brain'), {
+const brain = new Brain(brainHost, {
   canClick() {
     const next = clickCan(state);
     if (next === state) return;
@@ -188,8 +215,10 @@ function showGuide(): void {
 function hideGuide(): void {
   keys.clear();
   guide.close();
-  if (!introStarted) { introStarted = true; brain.start(); }
+  if (!introStarted) { introStarted = true; setView(true); brain.start(); }
 }
+$<HTMLButtonElement>('#title-start').addEventListener('click', () => { title.hidden = true; showGuide(); });
+viewToggle.addEventListener('click', () => { play('select'); setView(!headView); });
 $<HTMLButtonElement>('#show-guide').addEventListener('click', () => {
   showGuide();
   // 途中で開いた時は音の設定を変えずに戻る。
@@ -223,19 +252,69 @@ function update(next: GameState): void {
     slideBoard.classList.remove('solved');
     renderBoard();
   }
-  const dialogs = [[vending, 'vending'], [slide, 'slide'], [ending, 'ending']] as const;
+  const dialogs = [[vending, 'vending'], [slide, 'slide']] as const;
   for (const [dialog, phase] of dialogs) {
     if (state.phase === phase && !dialog.open) { keys.clear(); dialog.showModal(); }
     else if (state.phase !== phase && dialog.open) dialog.close();
   }
   sound.setDimmed(state.phase === 'vending' || state.phase === 'slide');
   brain.setStep(state.step);
+  if (before.step !== state.step) setView(HEAD_STEPS.has(state.step));
   app.dataset.loops = String(state.loops);
   if (state.loops > before.loops) whisper(state.loops === 1 ? 'あれ、さっきの場所に戻ってる。' : 'またここに戻ってきた。', 3500);
-  if (before.phase !== 'ending' && state.phase === 'ending') play('warp');
+  if (before.phase !== 'ending' && state.phase === 'ending') void runStory();
 }
 
-const onRestart = () => { keys.clear(); update(createGame()); };
+const scenes = new Scenes($<HTMLElement>('#scene'), (cue) => play(cue));
+const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+/** ステージ1の後の話（さりー案の流れを仮でつないだもの）。 */
+async function runStory(): Promise<void> {
+  const enter = (art: Parameters<Scenes['show']>[0], label: string) => { scenes.show(art, label); app.dataset.scene = art; storyHint = ''; };
+  setView(false);
+  enter('event', '商店街の先');
+  await scenes.say(STORY.event);
+  scenes.figure('friend-walk');
+  await sleep(3200);
+  await scenes.say(STORY.eventAfter);
+
+  play('warp');
+  enter('alley', 'ステージ2 路地');
+  await scenes.say(STORY.alley);
+  storyHint = `猫を${touchUI ? 'タップ' : 'クリック'}すると、猫が跳んで奥へ進みます。`;
+  await scenes.cat();
+  storyHint = '';
+  await scenes.say(STORY.cat);
+  storyHint = 'どうするか選んでください。';
+  const pick = await scenes.choose(STORY.choice);
+  storyHint = '';
+  if (pick !== 0) { finish('home'); return; }
+
+  play('warp');
+  enter('park', 'ステージ3 公園');
+  scenes.figure('friend', 64);
+  await scenes.say(STORY.park);
+  await scenes.say(STORY.puzzle);
+  await scenes.puzzle();
+  await scenes.say(STORY.parkAfter);
+  finish('friend');
+}
+function finish(id: keyof typeof ENDINGS): void {
+  storyHint = '';
+  app.dataset.ending = id;
+  $<HTMLElement>('#ending-title').textContent = ENDINGS[id].title;
+  $<HTMLElement>('#ending-text').textContent = ENDINGS[id].text;
+  play('warp');
+  ending.showModal();
+}
+
+const onRestart = () => {
+  keys.clear();
+  ending.close();
+  scenes.hide();
+  delete app.dataset.scene;
+  delete app.dataset.ending;
+  update(createGame());
+};
 for (const id of OBJECTS) {
   targets[id].addEventListener('click', () => {
     const next = inspect(state, id);
@@ -282,7 +361,7 @@ $<HTMLButtonElement>('#reload').addEventListener('click', () => window.location.
 
 const movementKeys = new Set(['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD']);
 function onKeyDown(event: KeyboardEvent): void {
-  if (movementKeys.has(event.code) && !guide.open && (state.phase === 'street' || state.phase === 'beyond')) {
+  if (movementKeys.has(event.code) && !guide.open && !headView && (state.phase === 'street' || state.phase === 'beyond')) {
     event.preventDefault();
     keys.add(event.code);
     if (touchUI) setInputMode(false);
@@ -310,13 +389,15 @@ function instruction(): string {
   const find = (id: ObjectId) => nearObject(state, id)
     ? `${OBJECT_NAMES[id]}を${tap}して調べてください。`
     : `${walk} で歩いて、${OBJECT_NAMES[id]}を探してください。`;
+  if (state.phase === 'ending') return storyHint;
+  if (headView && !HEAD_STEPS.has(state.step)) return '右上の「街に戻る」を押すと、街に戻ります。';
   switch (state.step) {
     case 'intro': case 'drained': case 'flooded': case 'shocked':
-      return `右の頭の中に出る文を読んでください。文を${tap}すると次へ進みます。`;
+      return `頭の中に出る文を読んでください。文を${tap}すると次へ進みます。`;
     case 'machine': return find('machine');
-    case 'choose': return nearObject(state, 'machine')
-      ? `頭の中の缶を${tap}してみてください。わかったら自販機で飲み物を選びます。`
-      : `頭の中の缶を${tap}してみてください。自販機で飲み物を選べます。`;
+    case 'choose':
+      if (headView) return `頭の中の缶を${tap}してみてください。わかったら右上の「街に戻る」を押して、自販機で飲み物を選びます。`;
+      return nearObject(state, 'machine') ? `自販機を${tap}して、飲み物を選んでください。` : `${walk} で歩いて、自販機で飲み物を選んでください。`;
     case 'pour': return `頭の中の缶を${tap}してください。`;
     case 'manhole': return find('manhole');
     case 'pole': return find('pole');
@@ -331,13 +412,21 @@ function animate(now: number): void {
   previousTime = now;
   const direction = Number(keys.has('ArrowRight') || keys.has('KeyD') || keys.has('TouchRight'))
     - Number(keys.has('ArrowLeft') || keys.has('KeyA') || keys.has('TouchLeft'));
-  update(move(state, guide.open ? 0 : direction, dt));
+  update(move(state, guide.open || headView ? 0 : direction, dt));
   app.dataset.x = state.x.toFixed(3);
   street.render(state, now / 1000, dt);
   // 足音（歩いている間、一定の間隔で）。
   stepTimer = state.moving ? stepTimer + dt : 0.25;
   if (stepTimer >= 0.32) { stepTimer = 0; play('step'); }
-  const walking = !guide.open && (state.phase === 'street' || state.phase === 'beyond');
+  const walking = !guide.open && !headView && (state.phase === 'street' || state.phase === 'beyond');
+  // 頭の中へ切り替わる時は、少女の頭のあたりから広がる。
+  if (!headView) {
+    const head = street.project(state.x, -0.4);
+    app.style.setProperty('--hx', `${head.x}px`);
+    app.style.setProperty('--hy', `${head.y}px`);
+  }
+  viewToggle.hidden = guide.open || state.phase !== 'street' || !introStarted || (headView && !FREE_STEPS.has(state.step));
+  viewToggle.textContent = headView ? '街に戻る' : '頭の中を見る';
   const active = activeObject(state);
   for (const id of OBJECTS) {
     const button = targets[id];
@@ -354,7 +443,7 @@ function animate(now: number): void {
     button.classList.toggle('near', near);
   }
   thought.classList.toggle('visible', now < thoughtUntil);
-  nextAction.hidden = !walking;
+  nextAction.hidden = guide.open || !(walking || headView || storyHint);
   touchButtons.forEach((button) => { button.hidden = !walking; });
   const text = instruction();
   if (nextAction.textContent !== text) nextAction.textContent = text;
@@ -364,7 +453,7 @@ function animate(now: number): void {
 try {
   street = new Street($<HTMLElement>('#street'), fail);
   update(state);
-  showGuide();
+  setView(false);
   frame = requestAnimationFrame(animate);
 } catch (cause) {
   console.error('Puzzle renderer initialization failed', cause);

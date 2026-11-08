@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { keyboard, readUntil, walkTo } from './stage.ts';
+import { keyboard, openTitle, readUntil, walkTo } from './stage.ts';
 
 // `npm run play` が作る、ダブルクリックで開く1ファイル版をサーバーなし（file://）で確かめる。
 const playFile = join(import.meta.dirname, '..', '..', '..', 'play', 'Puzzle.html');
@@ -14,8 +14,8 @@ test('double-click file: opens with the guide and plays without a server', async
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
   await page.goto(pathToFileURL(playFile).href);
-  await expect(page.locator('#street canvas')).toBeVisible();
-  await expect(page.getByRole('dialog', { name: '遊び方' })).toBeVisible();
+  await expect(page.locator('#street canvas')).toBeAttached();
+  await openTitle(page);
   await page.getByRole('button', { name: '音ありではじめる' }).click();
   await expect(page.locator('#app')).toHaveAttribute('data-sound', 'on');
   await readUntil(page, keyboard(page), 'machine');
