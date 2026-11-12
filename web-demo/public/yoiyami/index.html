@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>よいやみ（α版）</title>
+<style>
+:root { --ink: #e8e4d8; --dim: #8e98ad; --night: #0a1024; --red: #e8837a; font-family: "Yu Gothic UI", "Hiragino Sans", "Noto Sans JP", Meiryo, sans-serif; color: var(--ink); background: var(--night); }
+* { box-sizing: border-box; }
+body { margin: 0; height: 100dvh; overflow: hidden; user-select: none; -webkit-user-select: none; }
+button { font: inherit; color: inherit; cursor: pointer; }
+[hidden] { display: none !important; }
+#game { position: relative; width: 100vw; height: 100dvh; overflow: hidden; }
+.screen { position: absolute; inset: 0; }
+.fade { animation: fade 0.6s ease-out; }
+@keyframes fade { from { opacity: 0; } }
+
+/* タイトル */
+#title { display: grid; place-content: center; justify-items: center; background: radial-gradient(circle at 50% 30%, #f2d58a22 0 6%, transparent 30%), linear-gradient(#060a18, #121a36); }
+#title h1 { margin: 0; font-size: clamp(44px, 9vw, 88px); font-weight: 500; letter-spacing: 0.3em; text-indent: 0.3em; }
+#title p { margin: 10px 0 40px; color: var(--dim); font-size: 13px; }
+#title button, .plain { background: none; border: 0; border-bottom: 1px solid #ffffff55; padding: 8px 4px; font-size: 16px; }
+#title small { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; color: #6b7590; font-size: 11px; }
+
+/* ベンチ */
+#bench { background: linear-gradient(#05081a 0 55%, #0e1630 55%); }
+#bench.dawn { background: linear-gradient(#3b4f86, #c99a8a 55%, #2a3150 55%); transition: background 2s; }
+.post { position: absolute; left: 50%; top: 8%; bottom: 30%; width: 8px; margin-left: -4px; background: #2c3550; }
+.post::before { content: ''; position: absolute; top: -10px; left: -14px; width: 36px; height: 14px; border-radius: 8px 8px 2px 2px; background: #f4e3a6; box-shadow: 0 0 60px 30px #f4e3a644; }
+.light { position: absolute; left: 50%; top: 8%; width: 70vmin; height: 92%; transform: translateX(-50%); background: radial-gradient(ellipse at 50% 0%, #f4e3a62a, transparent 70%); pointer-events: none; }
+.benchseat { position: absolute; left: 50%; bottom: 30%; width: 34vmin; height: 3vmin; margin-left: -10vmin; background: #6b5545; }
+.benchseat::before, .benchseat::after { content: ''; position: absolute; top: 3vmin; width: 2vmin; height: 6vmin; background: #4d3c31; }
+.benchseat::before { left: 2vmin; } .benchseat::after { right: 2vmin; }
+.girl { position: absolute; left: calc(50% + 4vmin); bottom: calc(30% + 2vmin); width: 9vmin; height: 16vmin; border-radius: 4.5vmin 4.5vmin 1vmin 1vmin; background: #d6d1c4; }
+.girl::before { content: ''; position: absolute; left: 1vmin; top: -6.5vmin; width: 7vmin; height: 7vmin; border-radius: 50%; background: #1b1e2b; }
+.yoi { position: absolute; bottom: 30%; width: 7vmin; height: 15vmin; border-radius: 3.5vmin 3.5vmin 1vmin 1vmin; background: #232b4a; box-shadow: 0 0 0 2px #8ea0d055, 0 0 24px #8ea0d044; transition: left 1.2s ease-out; }
+.yoi::before { content: ''; position: absolute; left: 0.5vmin; top: -6.5vmin; width: 6vmin; height: 6vmin; border-radius: 50%; background: #232b4a; box-shadow: 0 0 0 2px #8ea0d055; }
+
+/* 会話（チャット風に上へ流れる） */
+#log { position: absolute; left: 50%; bottom: 52%; width: min(560px, 92vw); transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.msg { max-width: 82%; padding: 8px 14px; border-radius: 14px; font-size: 15px; line-height: 1.6; animation: up 0.35s ease-out; }
+.msg.girl-say { align-self: flex-start; background: #e8e4d8; color: #1b1e2b; border-bottom-left-radius: 3px; }
+.msg.yoi-say { align-self: flex-end; background: #2a345a; border-bottom-right-radius: 3px; }
+.msg.note { align-self: center; background: none; color: #f2d58a; }
+.msg.old { opacity: 0.35; }
+@keyframes up { from { opacity: 0; transform: translateY(10px); } }
+#choices { position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 14px; width: min(640px, 94vw); }
+#choices button { background: #0a1024cc; border: 1px solid var(--red); color: var(--red); padding: 10px 16px; border-radius: 3px; font-size: 15px; }
+#choices button:hover { background: #e8837a22; }
+#tap { position: absolute; left: 0; right: 0; bottom: 3%; text-align: center; font-size: 12px; color: var(--dim); pointer-events: none; }
+
+/* 探索マップ */
+#map { overflow: hidden; }
+#world { position: absolute; top: 0; bottom: 0; left: 0; will-change: transform; }
+.sky { position: absolute; inset: 0 0 34% 0; }
+.ground { position: absolute; left: 0; right: 0; bottom: 0; height: 34%; }
+.house { position: absolute; bottom: 34%; background: #1a2342; }
+.house i { position: absolute; width: 22%; height: 18%; background: #f2d58a; opacity: 0.55; }
+.obj { position: absolute; bottom: 34%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
+.obj .shape { background: #55657a; border-radius: 3px; }
+.obj .label { font-size: 12px; color: var(--dim); white-space: nowrap; }
+.obj.near .label { color: #f2d58a; }
+.obj.done { opacity: 0.35; }
+.exit { position: absolute; bottom: 34%; transform: translateX(-50%); font-size: 13px; color: #9fb6d6; white-space: nowrap; }
+.player { position: absolute; bottom: calc(34% - 1px); width: 46px; height: 96px; margin-left: -23px; border-radius: 23px 23px 6px 6px; background: #232b4a; box-shadow: 0 0 0 2px #8ea0d066, 0 0 30px #8ea0d055; }
+.player::before { content: ''; position: absolute; left: 4px; top: -40px; width: 38px; height: 38px; border-radius: 50%; background: #232b4a; box-shadow: 0 0 0 2px #8ea0d066; }
+.player.walk { animation: bob 0.32s ease-in-out infinite alternate; }
+@keyframes bob { to { transform: translateY(-4px); } }
+.shadow-kid { position: absolute; bottom: 34%; width: 40px; height: 90px; margin-left: -20px; border-radius: 20px 20px 4px 4px; background: #000; opacity: 0.55; filter: blur(2px); animation: sway 3s ease-in-out infinite; }
+@keyframes sway { 50% { transform: translateX(14px) skewX(4deg); opacity: 0.3; } }
+#map.uneasy #world { animation: shake 0.25s steps(2) infinite; }
+@keyframes shake { 50% { transform: translateX(var(--wx)) translateY(1px); } }
+#hud { position: absolute; top: 12px; left: 14px; right: 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; pointer-events: none; }
+#hud .place { font-size: 18px; }
+#hud .count { font-size: 13px; color: var(--dim); text-align: right; }
+#pieces { display: flex; gap: 4px; justify-content: flex-end; margin-top: 6px; }
+#pieces span { width: 14px; height: 18px; border-radius: 2px; background: #ffffff18; }
+#hint { position: absolute; left: 50%; bottom: 14%; transform: translateX(-50%); font-size: 14px; color: var(--ink); text-shadow: 0 2px 6px #000; white-space: nowrap; pointer-events: none; }
+#mapChoices { position: absolute; left: 50%; bottom: 20%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; width: min(560px, 92vw); }
+#mapChoices p { margin: 0 0 4px; padding: 8px 14px; background: #e8e4d8; color: #1b1e2b; border-radius: 12px; font-size: 15px; text-align: center; }
+#mapChoices button { background: #0a1024dd; border: 1px solid var(--red); color: var(--red); padding: 10px 18px; border-radius: 3px; font-size: 15px; }
+.touch { position: absolute; bottom: 16px; width: 64px; height: 64px; border-radius: 50%; border: 1px solid #ffffff44; background: #0a102488; font-size: 22px; touch-action: none; }
+.touch.l { left: 14px; } .touch.r { right: 14px; }
+.touch.act { right: 92px; width: auto; padding: 0 18px; border-radius: 32px; font-size: 15px; }
+#toast { position: absolute; left: 50%; top: 30%; transform: translateX(-50%); padding: 10px 20px; background: #f2d58a; color: #1b1e2b; border-radius: 3px; font-size: 15px; white-space: nowrap; animation: flash 2.2s ease-out forwards; pointer-events: none; }
+@keyframes flash { 0% { opacity: 0; transform: translate(-50%, 8px); box-shadow: 0 0 0 60vmax #ffffff22; } 15% { opacity: 1; transform: translate(-50%, 0); box-shadow: 0 0 0 60vmax #ffffff00; } 80% { opacity: 1; } 100% { opacity: 0; } }
+.voices { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); width: min(560px, 92vw); text-align: center; font-size: 15px; line-height: 2; color: #c8cbd6; pointer-events: none; }
+.voices span { display: block; animation: voice 3s ease-in-out forwards; opacity: 0; }
+@keyframes voice { 20%, 70% { opacity: 1; } }
+
+/* コラージュ */
+#collage { background: #141019; display: grid; grid-template-columns: auto auto; align-content: center; justify-content: center; gap: 28px; padding: 16px; }
+#collage .back { position: absolute; inset: 0; display: grid; place-content: center; font-size: clamp(12px, 1.6vw, 15px); line-height: 2.2; color: #ffffff10; text-align: center; pointer-events: none; white-space: pre-line; }
+#grid { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: min(54vmin, 380px); aspect-ratio: 1; }
+.slot { border: 1px dashed #ffffff33; background: #ffffff06; display: grid; place-items: center; padding: 4px; }
+.slot.center { border-color: #f2d58a88; }
+.piece { width: 100%; height: 100%; border: 0; border-radius: 2px; padding: 4px; font-size: clamp(11px, 1.8vmin, 14px); line-height: 1.3; display: grid; place-items: center; text-align: center; color: #1b1e2b; transform: rotate(var(--r)); box-shadow: 0 2px 6px #0008; }
+.piece.day { background: #f0c986; } .piece.night { background: #8fa2d6; } .piece.lamp { background: #d9d2c0; } .piece.special { background: #e8e4d8; outline: 2px solid #e8837a; }
+.piece.picked { outline: 3px solid #fff; }
+#hand { display: grid; grid-template-columns: repeat(3, 84px); grid-auto-rows: 84px; gap: 8px; align-content: start; }
+#collage .side { display: flex; flex-direction: column; gap: 12px; }
+#collage h2 { margin: 0; font-size: 18px; font-weight: 500; }
+#collage .side p { margin: 0; font-size: 13px; color: var(--dim); max-width: 280px; line-height: 1.7; }
+#give { align-self: flex-start; background: none; border: 1px solid var(--red); color: var(--red); padding: 10px 18px; }
+#give:disabled { opacity: 0.3; cursor: default; }
+@media (max-aspect-ratio: 1/1) { #collage { grid-template-columns: auto; } #hand { grid-template-columns: repeat(5, 56px); grid-auto-rows: 56px; } }
+
+/* エンド */
+#end { display: grid; place-content: center; justify-items: center; text-align: center; padding: 24px; background: #000; }
+#end .name { font-size: 13px; color: var(--dim); letter-spacing: 0.2em; }
+#end h2 { margin: 8px 0 28px; font-size: clamp(26px, 5vw, 40px); font-weight: 500; }
+#end .lines p { margin: 0 0 14px; font-size: 16px; line-height: 1.8; opacity: 0; animation: voice 99s, fadein 1.2s ease-out forwards; }
+@keyframes fadein { to { opacity: 1; } }
+#end .after { margin-top: 30px; display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; }
+#end .after small { display: block; width: 100%; color: #6b7590; font-size: 12px; }
+.alpha { position: absolute; right: 10px; bottom: 6px; font-size: 10px; color: #ffffff44; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="game">
+  <section id="title" class="screen">
+    <h1>よいやみ</h1>
+    <p>夜、一人でベンチに座る少女のために、街を歩く。</p>
+    <button id="start">はじめる</button>
+    <small>α版（仮素材）· 企画書 11/9 ときとまる · 学校の場面に、学校に行けていない子の描写があります</small>
+  </section>
+  <section id="bench" class="screen" hidden>
+    <div class="light"></div><div class="post"></div><div class="benchseat"></div><div class="girl"></div><div class="yoi" id="benchYoi" style="left:110%"></div>
+    <div id="log"></div><div id="choices"></div><p id="tap"></p>
+  </section>
+  <section id="map" class="screen" hidden>
+    <div id="world"></div>
+    <div id="hud"><div class="place" id="place"></div><div class="count"><span id="count"></span><div id="pieces"></div></div></div>
+    <p id="hint"></p>
+    <div id="mapChoices" hidden></div>
+    <button class="touch l" id="tl" aria-label="左へ">◀</button><button class="touch r" id="tr" aria-label="右へ">▶</button><button class="touch act" id="ta">調べる</button>
+  </section>
+  <section id="collage" class="screen" hidden>
+    <div class="back" id="collageBack"></div>
+    <div id="grid"></div>
+    <div class="side">
+      <h2>コラージュ</h2>
+      <p>集めた紙片を 3×3 に並べて、少女に渡します。紙片を選んでからマスを押すと置けます。もう一度押すと手元に戻ります。</p>
+      <div id="hand"></div>
+      <button id="give" disabled>少女に渡す</button>
+    </div>
+  </section>
+  <section id="end" class="screen" hidden></section>
+  <span class="alpha">よいやみ α版 · 仮素材</span>
+</div>
+<script>
+'use strict';
+// ===== データ（企画書 2026-11-09 ときとまる「よいやみ 企画書・ゲーム詳細設計」より） =====
+// 属性: day=昼(+1) night=夜(-1) lamp=灯(0) special=特殊(0、中央でだけ特殊エンド)
+const EVENTS = {
+  residential: [
+    { id: 'C01', x: 300, name: '自販機の下の小銭', shape: [40, 70], q: '自販機の下で小銭が光っている。', opts: [['交番に届ける', '誠実', 'day'], ['自分のものにする', 'ちゃっかり', 'night']] },
+    { id: 'C02', x: 620, name: '点滅する街灯', shape: [8, 150], q: '街灯がちかちか点滅している。', opts: [['軽く叩いてみる', '大胆', 'day'], ['眺める', '夢見がち', 'night']] },
+    { id: 'C03', x: 940, name: '車の来ない赤信号', shape: [10, 130], q: '車は来ないのに、信号は赤のまま。', opts: [['青まで待つ', '律儀', 'day'], ['渡る', '合理的', 'lamp']] },
+    { id: 'C04', x: 1260, name: '塀の上の猫', shape: [36, 22], q: '塀の上で猫がこっちを見ている。', opts: [['手を伸ばす', '愛着', 'day'], ['鳴きまねをする', '無邪気', 'lamp']] },
+    { id: 'C05', x: 1580, name: 'シャッターの落書き', shape: [90, 80], q: 'シャッターに落書きがある。', opts: [['描き足す', 'いたずら好き', 'lamp'], ['消そうとする', '真面目', 'day']] },
+    { id: 'C06', x: 1900, name: 'めくれたカラスよけネット', shape: [70, 20], net: true },
+    { id: 'C07', x: 2200, name: '掲示板のチラシ', shape: [60, 50], q: '掲示板にフリースクールの広告が貼ってある。', opts: [['広告を読む', 'フリースクール', 'special']] },
+  ],
+  park: [
+    { id: 'C08', x: 300, name: '砂場の作りかけの城', shape: [70, 24], q: '砂場に、作りかけの城が残っている。', opts: [['完成させる', '凝り性', 'night'], ['崩す', '破壊衝動', 'night']] },
+    { id: 'C09', x: 580, name: '揺れるブランコ', shape: [60, 90], q: '誰もいないのに、ブランコが揺れている。', opts: [['揺れを止める', '現実的', 'lamp'], ['一緒に漕ぐ', 'ロマンチスト', 'night']] },
+    { id: 'C10', x: 860, name: '木に引っかかった風船', shape: [26, 160], q: '木の枝に風船が引っかかっている。', opts: [['取って下に降ろす', '几帳面', 'day'], ['空に放す', '自由奔放', 'lamp']] },
+    { id: 'C11', x: 1140, name: '出しっぱなしの水飲み場', shape: [20, 70], q: '水飲み場の水が出しっぱなしになっている。', opts: [['止める', 'マメ', 'day'], ['飲む', '美食家', 'lamp']] },
+    { id: 'C12', x: 1420, name: '忘れられたサッカーボール', shape: [26, 26], lifting: true },
+    { id: 'C13', x: 1700, name: '片側のシーソー', shape: [110, 16], seesaw: true },
+    { id: 'C14', x: 1980, name: 'すべりだい', shape: [90, 70], q: 'すべりだいがある。', opts: [['上から滑る', 'ほがらか', 'lamp'], ['下から逆に登る', 'わんぱく', 'day']] },
+    { id: 'C15', x: 2240, name: 'ベンチで光るスマホ', shape: [60, 30], q: 'ベンチの上でスマホが光っている。誰かの投稿が流れている。', opts: [['流れる投稿を見る', 'デジタル', 'special']] },
+  ],
+  school: [
+    { id: 'C16', x: 320, name: '13段ある階段', shape: [80, 110], q: '階段がある。数えると13段ある気がする。', opts: [['段数を数える', 'オカルトマニア', 'night']] },
+    { id: 'C17', x: 720, name: '「廊下を走るな」の張り紙', shape: [50, 60], poster: true },
+    { id: 'C18', x: 1120, name: '女子トイレの扉', shape: [60, 120], door: true },
+    { id: 'C19', x: 1520, name: '落とし物箱の本', shape: [50, 40], q: '落とし物箱に、図書館の本が入っている。', opts: [['返却する', '図書館', 'special']] },
+    { id: 'C20', x: 1920, name: 'はがれた掲示物', shape: [60, 50], q: '掲示物が半分はがれている。', opts: [['なおす', '良心的', 'day'], ['破る', '破滅的', 'night']] },
+  ],
+};
+const MAPS = {
+  residential: { name: '住宅街', width: 2500, sky: 'linear-gradient(#070c22, #18234a)', ground: '#121a33', next: ['park', '公園へ'] },
+  park: { name: '公園', width: 2500, sky: 'linear-gradient(#060b1e, #14294a)', ground: '#13261f', next: ['school', '学校へ'], prev: ['residential', '住宅街へ'] },
+  school: { name: '学校の廊下', width: 2300, sky: 'linear-gradient(#141018, #2a2430)', ground: '#2b2522', prev: ['park', '公園へ'] },
+};
+const ENDS = {
+  E01: { name: '昼の足音', lines: ['朝が来た。', '少女はドアノブに手をかける。', '昼間、外に出てみようかと思う。', 'よいやみの姿は、もう見えない。'] },
+  E02: { name: '午前2時のシェルター', lines: ['閉めたカーテンの内側。', '少女とよいやみは、並んで座っている。', '二人だけの、あたたかい時間。'] },
+  E03: { name: 'イマジナリーな箱庭', lines: ['少女は同じベンチの上で、街を眺め続けている。', '街をかけまわるよいやみが、ガラスに映る。', 'その姿は、少女そのものだった。'] },
+  E04: { name: 'あなたの居場所', lines: ['昼間、少女は図書館で過ごすようになった。', '本棚の影で、よいやみがほほえんでいる。'] },
+  E05: { name: '画面の向こう', lines: ['スマホの画面に、少女の投稿が流れる。', 'それに「わかる」と返す投稿が、いくつも続く。'] },
+  E06: { name: 'ひだまりの輪', lines: ['同じくらいの年の子たちに囲まれて、', '少女の口元に、やわらかい笑みが浮かぶ。'] },
+};
+const WEIGHT = [1, 2, 1, 2, 3, 2, 1, 2, 1];
+const SCORE = { day: 1, night: -1, lamp: 0, special: 0 };
+const MAX_EXPLORE = 9;
+
+// ===== 状態 =====
+let f;
+function reset() { f = { explore: 0, hand: [], done: new Set(), net: 0, netAway: false, readPoster: false, slot: Array(9).fill(null), tutorialPiece: null }; }
+reset();
+
+const $ = (s) => document.querySelector(s);
+function show(id) { for (const s of document.querySelectorAll('.screen')) s.hidden = s.id !== id; $('#' + id).classList.remove('fade'); void $('#' + id).offsetWidth; $('#' + id).classList.add('fade'); }
+
+// ===== 会話（チャット風） =====
+const log = $('#log'), choices = $('#choices'), tap = $('#tap');
+function say(who, text) {
+  for (const m of log.children) m.classList.add('old');
+  while (log.children.length > 3) log.firstChild.remove();
+  const m = document.createElement('div');
+  m.className = 'msg ' + (who === 'girl' ? 'girl-say' : who === 'yoi' ? 'yoi-say' : 'note');
+  m.textContent = text; log.append(m);
+}
+function click() { tap.textContent = '画面をクリック／タップで次へ'; return new Promise((r) => { const h = (e) => { if (e.target.closest('button')) return; $('#bench').removeEventListener('pointerdown', h); tap.textContent = ''; r(); }; $('#bench').addEventListener('pointerdown', h); }); }
+async function lines(list) { for (const [who, text] of list) { say(who, text); await click(); } }
+function choose(opts) { return new Promise((r) => { choices.innerHTML = ''; opts.forEach((o, i) => { const b = document.createElement('button'); b.textContent = o; b.onclick = () => { choices.innerHTML = ''; r(i); }; choices.append(b); }); }); }
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// ===== 序章 =====
+async function intro() {
+  show('bench'); log.innerHTML = ''; $('#bench').classList.remove('dawn');
+  const yoi = $('#benchYoi'); yoi.style.left = '110%'; await wait(400); yoi.style.left = '68%'; await wait(1300);
+  await lines([['girl', 'こんばんは']]);
+  say('yoi', '何しているの'); await click();
+  await lines([['girl', 'ここで街の様子を見ているの'], ['girl', '夜の街って落ち着いた感じがするでしょう。でも実は結構いろんなことが起こるんだよ'], ['girl', '例えば――'], ['note', '（カラン、と空き缶が転がってきて止まった）'], ['girl', 'ほら誰かが捨てた空き缶'], ['girl', 'ああいうのを眺めるんだ']]);
+  say('yoi', '捨てないの？'); await click();
+  await lines([['girl', '捨てる？私が？'], ['girl', '考えたこともなかった'], ['girl', '君にとって私は街中でゴミ拾いするような女の子なの？']]);
+  const yn = await choose(['はい', 'いいえ']); say('yoi', yn ? 'いいえ' : 'はい'); await wait(500);
+  await lines([['girl', 'そうなんだ'], ['girl', '君の考えにちょっと興味が湧いたよ'], ['girl', '君にとっての私ってのをもっともっと教えてほしいな']]);
+  const words = ['優しい', '誠実', '健康的', '真面目', '飽き性', '怖がり', '多弁'];
+  say('yoi', words[await choose(words)]); await wait(500);
+  await lines([['girl', '……言葉だけだとあまりピンとこないね'], ['girl', 'そうだ。こういうのって行動で示すといいって聞いたことあるよ'], ['girl', 'さっきの空き缶。私だったらどうするのかやってみてよ']]);
+  tutorial();
+}
+
+// ===== 探索 =====
+let mapId = 'residential', px = 120, keys = new Set(), near = null, busy = false, tutorialMode = false, raf = 0, last = 0;
+const world = $('#world');
+function buildMap() {
+  const m = MAPS[mapId];
+  world.style.width = m.width + 'px';
+  let html = `<div class="sky" style="background:${m.sky}"></div><div class="ground" style="background:${m.ground}"></div>`;
+  if (mapId !== 'school') for (let x = 0; x < m.width; x += 260) html += `<div class="house" style="left:${x + 20}px;width:200px;height:${120 + (x * 7) % 90}px"><i style="left:14%;top:20%"></i><i style="left:62%;top:20%;opacity:${(x / 260) % 3 ? 0.1 : 0.55}"></i></div>`;
+  else { for (let x = 100; x < m.width; x += 240) html += `<div class="house" style="left:${x}px;width:150px;height:62%;background:#1d1a24"><i style="left:10%;top:12%;width:80%;height:40%;background:#3a3550;opacity:.6"></i></div>`; for (const x of [500, 900, 1300, 1700, 2100]) html += `<div class="shadow-kid" style="left:${x}px"></div>`; }
+  const list = tutorialMode ? [{ id: 'CAN', x: 700, name: '空き缶', shape: [16, 22] }, { id: 'BIN', x: 1300, name: 'ゴミ箱', shape: [40, 60] }] : EVENTS[mapId];
+  for (const e of list) html += `<div class="obj${f.done.has(e.id) ? ' done' : ''}" data-id="${e.id}" style="left:${e.x}px"><div class="shape" style="width:${e.shape[0]}px;height:${e.shape[1]}px${e.id === 'BIN' ? ';background:#3d4a5e' : ''}"></div><span class="label">${e.name}</span></div>`;
+  if (!tutorialMode) { if (m.prev) html += `<span class="exit" style="left:40px">◀ ${m.prev[1]}</span>`; if (m.next) html += `<span class="exit" style="left:${m.width - 50}px">${m.next[1]} ▶</span>`; }
+  html += '<div class="player" id="player"></div>';
+  world.innerHTML = html;
+  $('#place').textContent = tutorialMode ? '住宅街' : m.name;
+  $('#map').classList.remove('uneasy');
+  updateHud();
+}
+function updateHud() {
+  $('#count').textContent = tutorialMode ? 'チュートリアル' : `探索 ${f.explore} / ${MAX_EXPLORE}`;
+  $('#pieces').innerHTML = f.hand.map((p) => `<span class="piece ${p.attr}" title="${p.name}"></span>`).join('') + Array(Math.max(0, MAX_EXPLORE - f.hand.length)).fill('<span></span>').join('');
+}
+function currentList() { return tutorialMode ? [{ id: 'CAN', x: 700, name: '空き缶' }, { id: 'BIN', x: 1300, name: 'ゴミ箱' }] : EVENTS[mapId]; }
+function loop(t) {
+  const dt = Math.min(0.05, (t - (last || t)) / 1000); last = t;
+  const m = MAPS[mapId];
+  const dir = (keys.has('r') ? 1 : 0) - (keys.has('l') ? 1 : 0);
+  if (!busy && dir) px += dir * 360 * dt;
+  px = Math.max(30, Math.min(m.width - 30, px));
+  const player = $('#player');
+  if (player) { player.style.left = px + 'px'; player.classList.toggle('walk', !busy && dir !== 0); player.style.transform = dir < 0 ? 'scaleX(-1)' : ''; }
+  const vw = innerWidth, wx = Math.max(Math.min(0, vw / 2 - px), vw - m.width);
+  world.style.transform = `translateX(${wx}px)`; world.style.setProperty('--wx', wx + 'px');
+  // 近くの物
+  near = null;
+  for (const e of currentList()) if (Math.abs(e.x - px) < 70 && !f.done.has(e.id) && (!tutorialMode || (e.id === 'CAN' && !f.carry) || (e.id === 'BIN' && f.carry))) near = e;
+  if (!tutorialMode && px < 60 && m.prev) near = { exit: m.prev[0], name: m.prev[1] };
+  if (!tutorialMode && px > m.width - 60 && m.next) near = { exit: m.next[0], name: m.next[1] };
+  for (const o of world.querySelectorAll('.obj')) o.classList.toggle('near', near && o.dataset.id === near.id);
+  if (mapId === 'school' && !tutorialMode) $('#map').classList.toggle('uneasy', [500, 900, 1300, 1700, 2100].some((x) => Math.abs(x - px) < 60));
+  if (f.readPoster && f.posterWatch && Math.abs(px - 720) > 150 && dir) {
+    f.posterWatch = false; finishPiece('C17', keys.has('run') ? ['反抗的', 'lamp'] : ['素直', 'day']);
+  }
+  const hint = $('#hint');
+  if (!busy) hint.textContent = near ? `${near.exit ? near.name : near.name}　${matchMedia('(pointer:coarse)').matches ? '「調べる」' : 'Enter / スペース'}` : (tutorialMode ? (f.carry ? 'ゴミ箱まで運ぼう ▶' : '空き缶を探そう ▶') : '← → で歩く');
+  $('#ta').hidden = !near || busy;
+  raf = requestAnimationFrame(loop);
+}
+function enterMap(id, fromRight) { mapId = id; px = fromRight ? MAPS[id].width - 90 : 90; buildMap(); show('map'); }
+function act() {
+  if (busy || !near) return;
+  if (near.exit) { enterMap(near.exit, MAPS[near.exit].next && MAPS[near.exit].next[0] === mapId); if (mapId === 'residential' && f.netAway && f.net === 1) f.netAway = false; return; }
+  if (tutorialMode) return tutorialAct(near);
+  runEvent(near);
+}
+function mapAsk(text, opts) {
+  busy = true; $('#hint').textContent = '';
+  const box = $('#mapChoices'); box.hidden = false;
+  box.innerHTML = `<p>${text}</p>`;
+  return new Promise((r) => opts.forEach((o, i) => { const b = document.createElement('button'); b.textContent = o; b.onclick = () => { box.hidden = true; busy = false; r(i); }; box.append(b); }));
+}
+function toast(text) { const t = document.createElement('div'); t.id = 'toast'; t.textContent = text; $('#map').append(t); setTimeout(() => t.remove(), 2300); }
+function finishPiece(id, [name, attr]) {
+  f.done.add(id); f.hand.push({ id, name, attr }); f.explore++;
+  toast(`「${name}」の紙片を手に入れた！`);
+  buildMap();
+  if (f.explore >= MAX_EXPLORE) { busy = true; setTimeout(toBench2, 2400); }
+}
+async function runEvent(e) {
+  if (e.net) {
+    const i = await mapAsk(f.net ? 'ネットが、まためくれている。' : 'カラスよけネットがめくれている。', ['直す', '直さない']);
+    if (i === 0 && f.net === 0) { f.net = 1; f.netAway = true; toast('ネットを直した。'); return; }
+    if (i === 0) return finishPiece(e.id, ['根気強い', 'day']);
+    return finishPiece(e.id, f.net ? ['諦めがいい', 'night'] : ['無関心', 'night']);
+  }
+  if (e.lifting) {
+    await mapAsk('サッカーボールが置き忘れてある。リフティングをしてみる？', ['やってみる']);
+    const n = await lifting();
+    return finishPiece(e.id, n >= 10 ? ['アウトドア', 'day'] : ['インドア', 'night']);
+  }
+  if (e.seesaw) {
+    await mapAsk('片側だけ下がったシーソーがある。座ってみる。', ['座る']);
+    const sec = await seesaw();
+    return finishPiece(e.id, sec >= 15 ? ['さみしがり', 'night'] : ['割り切りがいい', 'day']);
+  }
+  if (e.poster) {
+    await mapAsk('「廊下を走るな」と書いてある。', ['読んだ']);
+    f.readPoster = true; f.posterWatch = true;
+    $('#hint').textContent = '';
+    toast('このまま廊下を進んでみよう（Shift を押しながらだと走る）');
+    return;
+  }
+  if (e.door) {
+    busy = true;
+    const v = document.createElement('div'); v.className = 'voices'; $('#map').append(v);
+    for (const s of ['「〇〇さんって今何してるのかな」', '「〇〇さん？」', '「ほら、1学期から来てない子いるじゃん」', '「へーそうだっけ？」']) { const sp = document.createElement('span'); sp.textContent = s; v.append(sp); await wait(1100); }
+    await wait(1200); v.remove();
+    const i = await mapAsk('扉の向こうから声がする。', ['ノックする', 'その場を離れる']);
+    return finishPiece(e.id, i === 0 ? ['強がり', 'day'] : ['繊細', 'night']);
+  }
+  const i = await mapAsk(e.q, e.opts.map((o) => o[0]));
+  finishPiece(e.id, e.opts[i].slice(1));
+}
+function lifting() {
+  return new Promise((resolve) => {
+    busy = true;
+    const box = $('#mapChoices'); box.hidden = false;
+    box.innerHTML = '<p>ボールが一番上に来た時に押す。外したら終わり。</p><div id="ballbar" style="position:relative;width:240px;height:14px;background:#ffffff22;border-radius:7px"><div id="zone" style="position:absolute;left:42%;width:16%;height:100%;background:#f2d58a55"></div><div id="ball" style="position:absolute;top:-3px;width:20px;height:20px;border-radius:50%;background:#fff;margin-left:-10px"></div></div><button id="kick">蹴る（スペース）</button><p id="lc" style="background:none;color:#e8e4d8">0 回</p>';
+    let n = 0, t0 = performance.now(), on = true;
+    const ball = $('#ball');
+    const tick = (t) => { if (!on) return; const p = (Math.sin((t - t0) / 1000 * (2.4 + n * 0.12)) + 1) / 2; ball.style.left = p * 100 + '%'; ball.dataset.p = p; requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+    const kick = () => { const p = Number(ball.dataset.p); if (Math.abs(p - 0.5) < 0.1) { n++; $('#lc').textContent = n + ' 回'; if (n >= 15) end(); } else end(); };
+    const end = () => { on = false; window.removeEventListener('keydown', k); box.hidden = true; busy = false; resolve(n); };
+    const k = (e) => { if (e.code === 'Space') { e.preventDefault(); kick(); } };
+    $('#kick').onclick = kick; window.addEventListener('keydown', k);
+  });
+}
+function seesaw() {
+  return new Promise((resolve) => {
+    busy = true; const box = $('#mapChoices'); box.hidden = false;
+    const t0 = performance.now();
+    box.innerHTML = '<p>シーソーに座っている。向かい側には誰もいない。</p><p id="ss" style="background:none;color:#8e98ad">0 秒</p><button id="off">降りる</button>';
+    const iv = setInterval(() => { $('#ss').textContent = Math.floor((performance.now() - t0) / 1000) + ' 秒'; }, 250);
+    $('#off').onclick = () => { clearInterval(iv); box.hidden = true; busy = false; resolve((performance.now() - t0) / 1000); };
+  });
+}
+
+// ===== チュートリアル =====
+function tutorial() { tutorialMode = true; f.carry = false; mapId = 'residential'; px = 120; buildMap(); show('map'); }
+async function tutorialAct(e) {
+  if (e.id === 'CAN') {
+    const i = await mapAsk('空き缶を拾った。少女ならどうする？', ['ゴミ箱に捨てる', '蹴とばす']);
+    if (i === 1) { toast('空き缶を蹴とばした。'); await wait(800); return tutorialPiece(['天邪鬼', 'night']); }
+    f.carry = true; buildMap(); return;
+  }
+  if (e.id === 'BIN') { toast('空き缶を捨てた。'); await wait(800); tutorialPiece(['綺麗好き', 'day']); }
+}
+async function tutorialPiece(p) {
+  f.tutorialPiece = p[0]; toast(`「${p[0]}」の紙片を手に入れた！`); busy = true; await wait(2200); busy = false;
+  tutorialMode = false;
+  show('bench'); log.innerHTML = ''; $('#benchYoi').style.left = '68%';
+  await lines([['girl', 'おかえり'], ['girl', 'なにか見つけたみたいだね']]);
+  say('yoi', `（「${p[0]}」の紙片を渡す）`); await click();
+  await lines([['girl', 'へぇ、これが君からみた私なんだ'], ['girl', 'でも、きっと私ってこれだけじゃないよね'], ['girl', 'お願いがあるんだけど聞いてくれる？'], ['girl', 'もっと街の中を見て、私の性格を教えてほしいんだ'], ['girl', '私じゃ私が何者なのか、全くわからないからさ'], ['girl', 'おねがいね'],
+    ['note', '夜の街を探索しよう。街の「ちょっとした困りごと」や「出来事」に触れると、少女の性格を表す紙片が手に入ります。9回探索すると、集めた紙片でコラージュを作ります。']]);
+  enterMap('residential');
+}
+
+// ===== 2章 =====
+async function toBench2() {
+  busy = false; show('bench'); log.innerHTML = ''; $('#bench').classList.add('dawn');
+  await lines([['girl', 'おかえり'], ['girl', 'もう日も昇ってきたし、そろそろ帰らないと'], ['girl', '私の性格、いいのが見つかった？']]);
+  collage();
+}
+let picked = null;
+function collage() {
+  show('collage'); f.slot = Array(9).fill(null); picked = null;
+  $('#collageBack').textContent = '真ん中は、その人の芯になる。\n外へ向かう紙片は暖かい色、内にこもる紙片は冷たい色。\n真ん中に近いほど、少女に強く残る。';
+  renderCollage();
+}
+function pieceHtml(p, i, where) { const r = ((p.id.charCodeAt(2) * 7) % 9) - 4; return `<button class="piece ${p.attr}${picked === i && where === 'hand' ? ' picked' : ''}" data-${where}="${i}" style="--r:${r}deg">${p.name}</button>`; }
+function renderCollage() {
+  const inSlots = new Set(f.slot.filter((s) => s !== null));
+  $('#grid').innerHTML = f.slot.map((s, i) => `<div class="slot${i === 4 ? ' center' : ''}" data-slot="${i}">${s !== null ? pieceHtml(f.hand[s], s, 'placed') : ''}</div>`).join('');
+  $('#hand').innerHTML = f.hand.map((p, i) => inSlots.has(i) ? '<span></span>' : pieceHtml(p, i, 'hand')).join('');
+  $('#give').disabled = f.slot.some((s) => s === null);
+}
+$('#collage').addEventListener('click', (e) => {
+  const h = e.target.closest('[data-hand]'), pl = e.target.closest('[data-placed]'), sl = e.target.closest('[data-slot]');
+  if (h) { picked = Number(h.dataset.hand); return renderCollage(); }
+  if (pl) { f.slot[f.slot.indexOf(Number(pl.dataset.placed))] = null; return renderCollage(); }
+  if (sl && picked !== null && f.slot[Number(sl.dataset.slot)] === null) { f.slot[Number(sl.dataset.slot)] = picked; picked = null; renderCollage(); }
+});
+$('#give').onclick = async () => {
+  const center = f.hand[f.slot[4]];
+  let score = 0; f.slot.forEach((s, i) => { score += SCORE[f.hand[s].attr] * WEIGHT[i]; });
+  const end = center.name === '図書館' ? 'E04' : center.name === 'デジタル' ? 'E05' : center.name === 'フリースクール' ? 'E06' : score >= 3 ? 'E01' : score <= -3 ? 'E02' : 'E03';
+  show('bench'); log.innerHTML = '';
+  await lines([['girl', 'へぇ、たくさん見つけてきてくれたんだ。'], ['girl', 'こんなにたくさん…………'], ['girl', '…………'], ['girl', 'ありがとう'], ['girl', '君の思う私について、もう少し考えてみるよ。']]);
+  ending(end, score);
+};
+function ending(id, score) {
+  show('end');
+  const seen = JSON.parse(safeGet('yoiyami-ends') || '[]'); if (!seen.includes(id)) seen.push(id); safeSet('yoiyami-ends', JSON.stringify(seen));
+  $('#end').innerHTML = `<span class="name">END ${id.slice(1)}</span><h2>${ENDS[id].name}</h2><div class="lines">${ENDS[id].lines.map((l, i) => `<p style="animation-delay:0s,${0.8 + i * 1.4}s">${l}</p>`).join('')}</div>
+    <div class="after"><small>コラージュの点数 ${score > 0 ? '+' : ''}${score} · 見たエンド ${seen.length} / 6（${Object.keys(ENDS).map((k) => seen.includes(k) ? ENDS[k].name : '？？？').join('、')}）</small><button class="plain" id="again">もう一度並べる</button><button class="plain" id="restart">はじめから</button></div>`;
+  $('#again').onclick = () => collage();
+  $('#restart').onclick = () => { reset(); show('title'); };
+}
+function safeGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+function safeSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
+
+// ===== 入力 =====
+addEventListener('keydown', (e) => {
+  if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.add('l');
+  if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.add('r');
+  if (e.key === 'Shift') keys.add('run');
+  if ((e.code === 'Enter' || e.code === 'Space') && !$('#map').hidden && $('#mapChoices').hidden) { e.preventDefault(); act(); }
+});
+addEventListener('keyup', (e) => {
+  if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.delete('l');
+  if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.delete('r');
+  if (e.key === 'Shift') keys.delete('run');
+});
+addEventListener('blur', () => keys.clear());
+for (const [id, k] of [['#tl', 'l'], ['#tr', 'r']]) {
+  const b = $(id);
+  b.addEventListener('pointerdown', (e) => { e.preventDefault(); keys.add(k); });
+  for (const t of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(t, () => keys.delete(k));
+}
+$('#ta').onclick = act;
+$('#start').onclick = () => { reset(); intro(); };
+if (!matchMedia('(pointer:coarse)').matches) { $('#tl').hidden = true; $('#tr').hidden = true; }
+raf = requestAnimationFrame(loop);
+</script>
+</body>
+</html>
