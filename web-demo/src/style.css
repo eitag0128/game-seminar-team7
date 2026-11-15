@@ -111,6 +111,7 @@ kbd { font: 12px/1.6 var(--ui-font); display: inline-block; border: 1px solid #7
 .title-screen h1 { font-size: clamp(48px, 10vw, 96px); letter-spacing: 0.08em; }
 .title-screen p { margin: 14px 0 0; color: #8fa6b8; font-size: 14px; }
 .title-screen .text-button { margin-top: 36px; font-size: 16px; }
+.title-link { margin-top: 28px; font-size: 14px; color: #f0e4bc; }
 
 /* ステージ1の後の話（仮） */
 .scene-art, .scene-art svg { position: absolute; inset: 0; width: 100%; height: 100%; }

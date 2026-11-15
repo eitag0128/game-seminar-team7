@@ -24,3 +24,21 @@ test('double-click file: opens with the guide and plays without a server', async
   await expect(page.locator('#app')).toHaveAttribute('data-step', 'choose');
   expect(errors).toEqual([]);
 });
+
+// よいやみのダブルクリック版（play/Yoiyami.html）。絵と音を埋め込んであるので、サーバーなしで開ける。
+const yoiyamiFile = join(import.meta.dirname, '..', '..', '..', 'play', 'Yoiyami.html');
+test('double-click file: yoiyami opens, the character art is embedded, the tutorial starts', async ({ page }) => {
+  test.skip(!existsSync(yoiyamiFile), 'npm run play で生成してから実行する');
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+  await page.goto(pathToFileURL(yoiyamiFile).href);
+  await page.getByRole('button', { name: 'はじめから' }).click();
+  await page.getByRole('button', { name: '会話を飛ばす' }).click();
+  await expect(page.locator('#game')).toHaveAttribute('data-screen', 'map');
+  await expect.poll(() => page.locator('#player').evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(384);
+  await page.keyboard.down('ArrowRight');
+  await expect.poll(async () => Number(await page.locator('#game').getAttribute('data-px'))).toBeGreaterThan(400);
+  await page.keyboard.up('ArrowRight');
+  expect(errors).toEqual([]);
+});

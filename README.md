@@ -6,9 +6,11 @@
 
 URLを開くだけです（GitHub Pages。main に push すると自動で更新）。PC でもスマホでも遊べます。
 
-https://eitag0128.github.io/game-seminar-team7/
+**よいやみ（今の企画。2026-11-09〜）**: https://eitag0128.github.io/game-seminar-team7/yoiyami/
 
-ネットがない場所では [`play/Puzzle.html`](play/Puzzle.html) をダブルクリックしても遊べます。Node.js・コマンドは不要です（Windows / Mac 共通）。
+ネットがない場所では [`play/Yoiyami.html`](play/Yoiyami.html) をダブルクリックしても遊べます。Node.js・コマンドは不要です（Windows / Mac 共通）。中身の説明は [docs/yoiyami/MIDTERM_20261116.md](docs/yoiyami/MIDTERM_20261116.md)。
+
+11/8 までの案（Puzzle）も残してあります: https://eitag0128.github.io/game-seminar-team7/ ／ [`play/Puzzle.html`](play/Puzzle.html)
 
 デモの開発・作り直しは [web-demo/README.md](web-demo/README.md) を参照してください。
 

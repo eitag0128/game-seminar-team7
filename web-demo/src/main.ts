@@ -52,8 +52,9 @@ app.innerHTML = `
   <p id="next-action" class="next-action" role="status"></p>
   <nav class="controls"><button id="view-toggle" class="help-button view-toggle">頭の中を見る</button><button id="show-guide" class="help-button">遊び方</button><button id="sound-toggle" class="help-button" aria-pressed="true">音 オン</button></nav>
   <section id="title" class="title-screen" aria-label="タイトル">
-    <h1>Puzzle</h1><p>7班 · 中間発表に向けた仮版</p>
+    <h1>Puzzle</h1><p>7班 · 11/8 までの案（ステージ1と仮の続き）</p>
     <button id="title-start" class="text-button">はじめる <span aria-hidden="true">→</span></button>
+    <a class="title-link" href="./yoiyami/index.html">新しい企画「よいやみ」（11/9〜）はこちら</a>
   </section>
   <dialog id="guide" class="guide-dialog" aria-labelledby="guide-title">
     <h2 id="guide-title">遊び方</h2>

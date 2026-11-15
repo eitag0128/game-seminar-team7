@@ -1,4 +1,10 @@
-# Puzzle / 7班 ブラウザデモ
+# 7班 ブラウザデモ
+
+**今の企画は「よいやみ」です（2026-11-09〜）。** 本体は `public/yoiyami/index.html` の1ファイルで、説明は [`../docs/yoiyami/MIDTERM_20261116.md`](../docs/yoiyami/MIDTERM_20261116.md) にあります。URLは https://eitag0128.github.io/game-seminar-team7/yoiyami/ 、ダブルクリック版は `../play/Yoiyami.html`（`npm run play` で作り直す）。
+
+以下は、11/8 までの案「Puzzle」（Three.js + TypeScript）の説明です。こちらも残してあります。
+
+# Puzzle（11/8 までの案）
 
 既存の Team7 リポジトリを使う、Three.js + TypeScript + Vite の独立アプリです。リポジトリ直下の Unity プロジェクトは変更していません。開発場所は `D:/ゲーム制作/ゲーム制作演習/game-seminar-team7/web-demo`。
 

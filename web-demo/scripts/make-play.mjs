@@ -15,6 +15,8 @@ html = html.replace(/<script type="module" crossorigin src="\.\/(assets\/[^"]+\.
 });
 html = html.replace(/<link rel="stylesheet" crossorigin href="\.\/(assets\/[^"]+\.css)">/, (_, file) =>
   `<style>${readFileSync(join(dist, file), 'utf8')}</style>`);
+// ダブルクリック版では、よいやみも同じフォルダの1ファイル（Yoiyami.html）にしてある。
+html = html.replaceAll('./yoiyami/index.html', './Yoiyami.html');
 if (/(src|href)="\.\/assets\//.test(html)) throw new Error('埋め込めなかった assets の参照が残っています');
 
 mkdirSync(out, { recursive: true });
