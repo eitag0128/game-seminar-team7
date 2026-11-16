@@ -123,6 +123,26 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 #guide { position: absolute; right: 16px; top: 44%; padding: 6px 14px; background: var(--black); border-radius: 16px; font-size: 14px; color: #ffe38a; animation: guide 0.9s ease-in-out infinite alternate; pointer-events: none; }
 @keyframes guide { to { transform: translateX(8px); } }
 
+/* 探索の説明（企画書 1-7「紙片のチュートリアル画面」） */
+#howto { position: absolute; inset: 0; z-index: 15; display: grid; place-items: center; padding: 14px; background: #0a0f6ecc; }
+#howto .card { width: min(560px, 100%); max-height: 100%; overflow: auto; padding: 22px 24px 18px; background: var(--paper); color: #1d1b33; clip-path: polygon(0 2%, 40% 0, 100% 1.5%, 99% 98%, 55% 100%, 1% 99%); }
+#howto h2 { margin: 0 0 8px; font-size: clamp(18px, 3.4vmin, 24px); }
+#howto .lead { margin: 0 0 12px; font-size: 14px; line-height: 1.8; }
+#howto ol { margin: 0 0 12px; padding-left: 1.4em; font-size: 14px; line-height: 1.75; }
+#howto li b { color: #c8322c; }
+#howto .keys { margin: 0 0 14px; padding: 8px 12px; background: #1d1b330d; border-radius: 3px; font-size: 13px; line-height: 1.9; }
+#howto kbd { font: inherit; font-size: 12px; border: 1px solid #1d1b3366; border-radius: 3px; padding: 0 5px; margin-right: 2px; background: #fff; }
+#howto .go { display: flex; justify-content: flex-end; }
+#game[data-input="touch"] #howto .for-keys, #game:not([data-input="touch"]) #howto .for-touch { display: none; }
+@media (max-height: 460px) { #howto .lead { display: none; } #howto .card { padding: 14px 18px; } #howto ol { margin-bottom: 8px; line-height: 1.55; } }
+#legend { position: absolute; left: 14px; bottom: 12px; font-size: 12px; color: #dfe3ffcc; pointer-events: none; }
+#legend kbd { font: inherit; border: 1px solid #ffffff55; border-radius: 3px; padding: 0 4px; margin: 0 3px 0 10px; }
+#legend kbd:first-child { margin-left: 0; }
+#game[data-input="touch"] #legend { display: none; }
+#game[data-input="keys"] .choice[data-n]::before { content: attr(data-n); display: inline-block; min-width: 1.4em; margin-right: 6px; border-radius: 3px; background: #ffffff1f; color: #fff; font-size: 0.8em; text-align: center; }
+#collageStep { margin: 0; padding: 8px 12px; background: #ffffff14; border-left: 3px solid #ffe38a; font-size: 14px; color: #fff; line-height: 1.6; }
+#end .tapnext { margin: 2px 0 0; font-size: 12px; color: #8c8ca0; }
+
 /* 上のボタン */
 #top { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 9; }
 .pill { background: #0a0f6ecc; border: 1px solid #ffffff55; border-radius: 16px; padding: 4px 12px; font-size: 12px; }
@@ -201,20 +221,35 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
     <div id="ask" hidden></div>
     <div id="guide" hidden>ゴミ箱 ▶</div>
     <button class="touch l" id="tl" aria-label="左へ歩く">◀</button><button class="touch r" id="tr" aria-label="右へ歩く">▶</button>
-    <button class="touch run" id="trun" hidden>走る</button><button class="touch act" id="ta" hidden>調べる</button>
+    <button class="touch run" id="trun">走る</button><button class="touch act" id="ta" hidden>調べる</button>
+    <p id="legend"><kbd>← →</kbd>歩く<kbd>Shift</kbd>走る<kbd>Enter</kbd>調べる</p>
+    <div id="howto" hidden><div class="card">
+      <h2>夜の街の中を探索しよう</h2>
+      <p class="lead">街中に存在する「ちょっとした困りごと」や「出来事」に触れると、少女の性格を表す「紙片」を入手できます。集めた紙片はコラージュとして組み合わせることができます。使用した紙片によって少女の結末に変化が起こるかも…？</p>
+      <ol>
+        <li><b>紙が浮かんでいる物</b>に近づいて調べる。</li>
+        <li>出てきた選択肢から、<b>少女ならどうするか</b>を選ぶ。選んだ行動が紙片になる。</li>
+        <li>調べられるのは<b>9回まで</b>。住宅街・公園・学校の廊下は、<b>道の端の看板</b>から行き来できる。</li>
+        <li>9枚集まると少女のところへ戻り、紙片を並べてコラージュを作る。</li>
+      </ol>
+      <p class="keys for-keys"><kbd>←</kbd><kbd>→</kbd> 歩く　<kbd>Shift</kbd> を押しながら走る　<kbd>Enter</kbd> 調べる・次へ　<kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 選択肢を選ぶ</p>
+      <p class="keys for-touch">◀ ▶ を押している間歩く　「走る」を押しながらで速く歩く　「調べる」で調べる</p>
+      <div class="go"><button class="choice" id="howtoGo">探索をはじめる</button></div>
+    </div></div>
   </section>
   <section id="collage" class="screen" hidden>
     <div id="backText"></div>
     <div id="grid"></div>
     <div class="side">
       <h2>少女のコラージュ</h2>
-      <p>集めた紙片を並べて、少女に渡します。紙片を選んでから、置きたいマスを押してください。置いた紙片を押すと手元に戻ります。</p>
+      <p>集めた9枚を並べて少女に渡します。どこに何を置くかで、少女の「これから」が変わります。置いた紙片を押すと手元に戻ります。</p>
+      <p id="collageStep"></p>
       <div id="hand"></div>
       <button id="give" class="choice" disabled>少女に渡す</button>
     </div>
   </section>
   <section id="end" class="screen" hidden></section>
-  <div id="top"><button class="pill" id="sound" aria-pressed="true">音 オン</button><button class="pill" id="skip" hidden>会話を飛ばす</button><button class="pill" id="toTitle" hidden>タイトルへ</button></div>
+  <div id="top"><button class="pill" id="sound" aria-pressed="true">音 オン</button><button class="pill" id="skip" hidden>会話を飛ばす</button><button class="pill" id="help" hidden>遊び方</button><button class="pill" id="toTitle" hidden>タイトルへ</button></div>
   <div id="flash"></div>
   <div id="book" hidden><div class="inner"><h2 id="bookTitle"></h2><ul id="bookList"></ul><button class="choice" id="closeBook">閉じる</button></div></div>
   <span class="tag">よいやみ 中間発表版 · 仮素材</span>
@@ -411,7 +446,13 @@ function show(id) {
   game.dataset.screen = id;
   const el = $('#' + id); el.classList.remove('fade'); void el.offsetWidth; el.classList.add('fade');
 }
-function setTop({ skip = false, title = true } = {}) { $('#skip').hidden = !skip; $('#toTitle').hidden = !title; }
+function setTop({ skip = false, title = true, help = false } = {}) {
+  $('#skip').hidden = !skip; $('#toTitle').hidden = !title; $('#help').hidden = !help;
+  armTitle(false);
+}
+// 「タイトルへ」は押し間違えると最初からになるので、2回押した時だけ戻る。
+let titleArmed = 0;
+function armTitle(on) { clearTimeout(titleArmed); titleArmed = 0; $('#toTitle').textContent = on ? 'もう一度押すとタイトルへ' : 'タイトルへ'; if (on) titleArmed = setTimeout(() => armTitle(false), 3000); }
 
 // 音。効果音はコンポーザー提供（materials/se）。学校のざわめきは素材がないので仮の音を作る。
 let soundOn = store('yoiyami-sound-off').length === 0, actx = null, murmur = null;
@@ -447,7 +488,10 @@ let advance = null;
 function click() { tap.textContent = '画面をクリック / タップ / Enter で次へ'; return new Promise((r) => { advance = () => { advance = null; tap.textContent = ''; r(); }; }); }
 $('#bench').addEventListener('pointerdown', (e) => { if (!e.target.closest('button') && advance) advance(); });
 async function lines(my, list) { for (const [who, text] of list) { if (my !== scene) return false; say(who, text); await click(); } return my === scene; }
-function choose(opts) { return new Promise((r) => { choices.innerHTML = ''; opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'choice'; b.textContent = o; b.onclick = () => { choices.innerHTML = ''; se('select'); r(i); }; choices.append(b); }); }); }
+function choose(opts) {
+  tap.textContent = '';
+  return new Promise((r) => { choices.innerHTML = ''; opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'choice'; b.dataset.n = String(i + 1); b.textContent = o; b.onclick = () => { choices.innerHTML = ''; se('select'); r(i); }; choices.append(b); }); });
+}
 function benchReset(dawn = false) { log.innerHTML = ''; choices.innerHTML = ''; tap.textContent = ''; advance = null; $('#bench').classList.toggle('dawn', dawn); $('#titleUI').hidden = true; }
 
 function title() {
@@ -490,7 +534,8 @@ const list = () => (tutorialMode ? tutorialList : EVENTS[mapId]);
 function objHtml(e) {
   const [w, h, inner] = ART[e.id];
   const state = e.id === 'C06' && f.netFixed ? ' fixed' : '';
-  return `<div class="obj${f.done.has(e.id) ? ' done' : ''}${state}${e.id === 'BIN' ? ' noscrap' : ''}" data-id="${e.id}" style="left:${e.x}px"><i class="scrap"></i><svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${inner}</svg></div>`;
+  const noscrap = e.id === 'BIN' || (e.id === 'C06' && f.net === 1) || (e.id === 'C17' && f.readPoster);
+  return `<div class="obj${f.done.has(e.id) ? ' done' : ''}${state}${noscrap ? ' noscrap' : ''}" data-id="${e.id}" style="left:${e.x}px"><i class="scrap"></i><svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${inner}</svg></div>`;
 }
 function signHtml(x, text, right) {
   return `<div class="exit" style="left:${x}px"><svg width="150" height="150" viewBox="0 0 150 150" style="overflow:visible"><path d="M75 150V40" stroke="#2a3ad8" stroke-width="8"/><path d="${right ? 'M10 10h104l26 24-26 24H10z' : 'M140 10H36L10 34l26 24h104z'}" fill="#f4efe6"/><text x="75" y="42" font-size="22" font-weight="700" text-anchor="middle" fill="#1d1b33">${text}</text></svg></div>`;
@@ -515,7 +560,7 @@ function buildMap() {
   updateHud();
 }
 function updateHud() {
-  $('#count').textContent = tutorialMode ? '' : `探索 ${f.explore} / ${MAX_EXPLORE}`;
+  $('#count').textContent = tutorialMode ? '' : `紙片 ${f.explore} / ${MAX_EXPLORE}`;
   $('#pieces').innerHTML = tutorialMode ? '' : f.hand.map((p) => `<span class="a-${p.attr}"></span>`).join('') + '<span></span>'.repeat(Math.max(0, MAX_EXPLORE - f.hand.length));
   $('#bagList').innerHTML = f.hand.length ? f.hand.map((p) => `<li>${p.name}</li>`).join('') : '<li>まだ何も持っていない</li>';
   game.dataset.explore = String(f.explore);
@@ -564,7 +609,7 @@ function loop(t) {
   const uneasy = mapId === 'school' && !tutorialMode && SHADOWS.some((x) => Math.abs(x - px) < 110);
   $('#map').classList.toggle('uneasy', uneasy); setMurmur(uneasy ? 0.16 : 0);
   // 張り紙を読んだ後、廊下を走ったか歩いたか
-  if (f.posterWatch && !busy && Math.abs(px - 980) > 260) { f.posterWatch = false; $('#trun').hidden = true; finishPiece('C17', f.ran ? ['反抗的', 'lamp'] : ['素直', 'day']); }
+  if (f.posterWatch && !busy && Math.abs(px - 980) > 260) { f.posterWatch = false; finishPiece('C17', f.ran ? ['反抗的', 'lamp'] : ['素直', 'day']); }
   if (f.posterWatch && running) f.ran = true;
   const touch = game.dataset.input === 'touch', hint = $('#hint');
   let text = '';
@@ -572,7 +617,7 @@ function loop(t) {
     if (near) text = `<b>${near.name}</b>${touch ? '' : '<kbd>Enter</kbd>'}`;
     else if (tutorialMode) text = f.carry ? 'ゴミ箱まで運ぶ' : (touch ? '◀ ▶ で歩いて、空き缶のところへ' : '← → で歩いて、空き缶のところへ');
     else if (f.posterWatch) text = touch ? 'このまま廊下を進む（「走る」を押している間は走る）' : 'このまま廊下を進む（Shift を押しながらで走る）';
-    else if (f.explore === 0) text = touch ? '◀ ▶ で歩く。紙片の印がある物を調べる' : '← → で歩く。紙片の印がある物を調べる';
+    else text = compass();
   }
   if (hint.innerHTML !== text) hint.innerHTML = text;
   hint.hidden = !text || cutscene;
@@ -580,10 +625,24 @@ function loop(t) {
   $('#guide').hidden = !(tutorialMode && f.carry && !busy && Math.abs(px - 1500) > 300);
 }
 requestAnimationFrame(loop);
+// 近くに何もない時、次に調べられる物か、まだ調べていない場所への看板の方向を出す。
+function compass() {
+  const left = MAX_EXPLORE - f.explore, arrow = (x) => (x < px ? '◀ ' : '') + '%s' + (x < px ? '' : ' ▶');
+  const targets = list().filter(interactable);
+  if (targets.length) {
+    const t = targets.reduce((a, b) => (Math.abs(b.x - px) < Math.abs(a.x - px) ? b : a));
+    return arrow(t.x).replace('%s', `${t.name}（あと${left}回調べられる）`);
+  }
+  // この場所は調べ終えた。まだ調べられる物がある場所へ
+  const m = MAPS[mapId], open = (id) => id && EVENTS[id].some(interactable);
+  const go = open(m.next) ? m.next : open(m.prev) ? m.prev : m.next || m.prev;
+  if (!go) return '';
+  return arrow(go === m.next ? m.width : 0).replace('%s', `ここは調べ終えた。看板から${MAPS[go].name}へ`);
+}
 function enterMap(id, fromRight) {
   mapId = id; px = fromRight ? MAPS[id].width - 220 : 220; facing = fromRight ? -1 : 1;
   if (id === 'residential' && f.net === 1) { f.net = 2; f.netFixed = false; } // 戻ってくると、ネットがまためくれている
-  buildMap(); show('map'); setTop({});
+  buildMap(); show('map'); setTop({ help: !tutorialMode });
 }
 function act() {
   if (busy || cutscene || !near || $('#map').hidden) return;
@@ -597,7 +656,7 @@ function ask(text, opts, extra = '') {
   busy = true; keys.clear();
   const box = $('#ask'); box.hidden = false;
   box.innerHTML = `<p>${text}</p>${extra}<div class="row"></div>`;
-  return new Promise((r) => opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'choice'; b.textContent = o; b.onclick = () => { box.hidden = true; busy = false; se('select'); r(i); }; box.querySelector('.row').append(b); }));
+  return new Promise((r) => opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'choice'; b.dataset.n = String(i + 1); b.textContent = o; b.onclick = () => { box.hidden = true; busy = false; se('select'); r(i); }; box.querySelector('.row').append(b); }));
 }
 function toast(text, attr) {
   $('#toast')?.remove();
@@ -617,7 +676,7 @@ async function runEvent(e) {
   if (e.kind === 'net') {
     if (f.net === 0) {
       if (await ask('ゴミ置き場のカラスよけネットがめくれている。', ['直す', '直さない']) === 1) return finishPiece(e.id, ['無関心', 'night']);
-      f.net = 1; f.netFixed = true; buildMap(); return toast('ネットを直した。');
+      f.net = 1; f.netFixed = true; buildMap(); return toast('ネットを直した。また後で見に来よう。');
     }
     const again = await ask('さっき直したネットが、まためくれている。', ['もう一度直す', '直さない']) === 0;
     f.netFixed = again;
@@ -627,7 +686,7 @@ async function runEvent(e) {
   if (e.kind === 'seesaw') { await ask('片側だけ下がったシーソーがある。', ['座る']); return finishPiece(e.id, await seesaw() >= 15 ? ['さみしがり', 'night'] : ['割り切りがいい', 'day']); }
   if (e.kind === 'poster') {
     await ask('「廊下を走るな」と書いてある。', ['読んだ']);
-    f.readPoster = true; f.posterWatch = true; f.ran = false; $('#trun').hidden = false; buildMap(); return;
+    f.readPoster = true; f.posterWatch = true; f.ran = false; buildMap(); return;
   }
   if (e.kind === 'door') {
     // 扉の向こうの声は、吹き出しを使わず文字だけを浮かべて消す（企画書 2-6）
@@ -644,7 +703,7 @@ async function runEvent(e) {
 function lifting() {
   return new Promise((resolve) => {
     busy = true; const box = $('#ask'); box.hidden = false;
-    box.innerHTML = `<p>ボールが黄色い所に来た時に蹴る。外すと終わり。</p><div class="bar"><div class="zone"></div><div class="ball"></div></div><p class="num">0 回</p><div class="row"><button class="choice" id="kick">蹴る</button></div>`;
+    box.innerHTML = `<p>ボールが黄色い所に来た時に蹴る。外すと終わり。${game.dataset.input === 'touch' ? '' : '<br><small>Space / Enter でも蹴れる</small>'}</p><div class="bar"><div class="zone"></div><div class="ball"></div></div><p class="num">0 回</p><div class="row"><button class="choice" id="kick">蹴る</button></div>`;
     const ball = box.querySelector('.ball'), t0 = performance.now(); let n = 0, on = true, p = 0;
     const tick = (t) => { if (!on) return; p = (Math.sin((t - t0) / 1000 * (2.2 + n * 0.1)) + 1) / 2; ball.style.left = p * 100 + '%'; requestAnimationFrame(tick); };
     requestAnimationFrame(tick);
@@ -682,11 +741,15 @@ async function tutorialPiece([name, attr]) {
   await wait(2500); if (my !== scene) return;
   busy = false; tutorialMode = false; f.carry = false;
   benchReset(); show('bench'); $('#benchYoi').style.left = '1010px';
-  if (!await lines(my, [['girl', 'おかえり'], ['girl', 'なにか見つけたみたいだね'], ['yoi', `（${name}の破片を渡す）`], ['girl', 'へぇ、これが君からみた私なんだ'], ['girl', 'でも、きっと私ってこれだけじゃないよね'], ['girl', 'お願いがあるんだけど聞いてくれる？'], ['girl', 'もっと街の中を見て、私の性格を教えてほしいんだ'], ['girl', '私じゃ私が何者なのか、全くわからないからさ'], ['girl', 'おねがいね'],
-    ['note', '夜の街の中を探索しよう。街の「ちょっとした困りごと」や「出来事」に触れると、少女の性格を表す「紙片」が手に入ります。'],
-    ['note', '探索できるのは9回まで。集めた紙片はコラージュとして組み合わせます。使った紙片で、少女の結末が変わるかも…？']])) return;
+  if (!await lines(my, [['girl', 'おかえり'], ['girl', 'なにか見つけたみたいだね'], ['yoi', `（${name}の破片を渡す）`], ['girl', 'へぇ、これが君からみた私なんだ'], ['girl', 'でも、きっと私ってこれだけじゃないよね'], ['girl', 'お願いがあるんだけど聞いてくれる？'], ['girl', 'もっと街の中を見て、私の性格を教えてほしいんだ'], ['girl', '私じゃ私が何者なのか、全くわからないからさ'], ['girl', 'おねがいね']])) return;
   enterMap('residential');
+  showHowto();
 }
+function showHowto() {
+  busy = true; keys.clear();
+  $('#howto').hidden = false; $('#howtoGo').focus();
+}
+$('#howtoGo').onclick = () => { $('#howto').hidden = true; busy = false; se('select'); };
 
 // ===================================================================================================
 // コラージュとエンド判定（企画書 2-4、2-5）
@@ -708,7 +771,10 @@ function renderCollage() {
   const placed = new Set(f.slot.filter((s) => s !== null));
   $('#grid').innerHTML = f.slot.map((s, i) => `<div class="slot${i === 4 ? ' center' : ''}${picked !== null && s === null ? ' ok' : ''}" data-slot="${i}">${s !== null ? pieceHtml(s, 'placed') : ''}</div>`).join('');
   $('#hand').innerHTML = f.hand.map((p, i) => (placed.has(i) ? '' : pieceHtml(i, 'hand'))).join('');
-  $('#give').disabled = f.slot.some((s) => s === null);
+  const empty = f.slot.filter((s) => s === null).length;
+  $('#give').disabled = empty > 0;
+  $('#collageStep').textContent = empty === 0 ? '9枚並べ終わりました。よければ「少女に渡す」を押してください。'
+    : picked === null ? `① 手元の紙片を1枚選ぶ（あと${empty}枚）` : '② 置きたいマスを選ぶ（真ん中がいちばん大事）';
 }
 $('#collage').addEventListener('click', (e) => {
   const hand = e.target.closest('[data-hand]'), placed = e.target.closest('[data-placed]'), slot = e.target.closest('[data-slot]');
@@ -736,14 +802,16 @@ function ending(id, score) {
   show('end'); setTop({}); se('move', 0.4);
   const extra = id === 'E02' ? `<img src="${IMG.idle[0]}" alt="" style="left:50%;bottom:6%;height:42%;transform:translateX(10%)">` : id === 'E04' ? `<img src="${IMG.idle[1]}" alt="" style="left:6%;bottom:4%;height:30%;opacity:.85">` : '';
   $('#end').innerHTML = `<div class="cg"><svg viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice">${END_CG[id]}</svg>${extra}</div>
-    <div class="text"><div class="no">END ${id.slice(2)}</div><h2>${end.name}</h2><p class="line"></p>
+    <div class="text"><div class="no">END ${id.slice(2)}</div><h2>${end.name}</h2><p class="line"></p><p class="tapnext">クリック / タップで次へ</p>
     <div class="after" hidden><button class="menu" id="again">並べ直す</button><button class="menu" id="back">タイトルへ</button><small>見たエンド ${seen.length} / 6　·　確認用：コラージュの点数 ${score > 0 ? '+' : ''}${score}</small></div></div>`;
   game.dataset.end = id;
-  let i = 0; const line = $('#end .line');
+  let i = 0, timer = 0; const line = $('#end .line');
   const next = () => {
+    clearTimeout(timer);
     if (my !== scene) return;
-    if (i >= texts.length) { $('#end .after').hidden = false; $('#end').removeEventListener('pointerdown', onTap); return; }
+    if (i >= texts.length) { $('#end .after').hidden = false; $('#end .tapnext').hidden = true; endAdvance = null; $('#end').removeEventListener('pointerdown', onTap); return; }
     line.textContent = texts[i++]; line.classList.remove('fade'); void line.offsetWidth; line.classList.add('fade');
+    timer = setTimeout(next, 3600);
   };
   const onTap = (e) => { if (!e.target.closest('button')) next(); };
   $('#end').addEventListener('pointerdown', onTap); endAdvance = next; next();
@@ -767,7 +835,11 @@ function openBook(kind) {
 $('#openEnds').onclick = () => openBook('ends'); $('#openPieces').onclick = () => openBook('pieces'); $('#closeBook').onclick = () => { $('#book').hidden = true; };
 $('#start').onclick = () => { se('select'); intro(); };
 $('#skip').onclick = () => { tutorial(); };
-$('#toTitle').onclick = () => { busy = false; $('#ask').hidden = true; $('#trun').hidden = true; tutorialMode = false; title(); };
+$('#toTitle').onclick = () => {
+  if (!titleArmed) return armTitle(true);
+  armTitle(false); busy = false; $('#ask').hidden = true; $('#howto').hidden = true; tutorialMode = false; title();
+};
+$('#help').onclick = () => showHowto();
 
 // ===================================================================================================
 // 入力
@@ -780,8 +852,9 @@ addEventListener('keydown', (e) => {
   if (e.code === 'ArrowRight' || e.code === 'KeyD') { keys.add('r'); setInput(false); }
   if (e.key === 'Shift') keys.add('run');
   if (e.code === 'Enter' || e.code === 'Space' || e.code === 'KeyE') {
-    if (document.activeElement && document.activeElement.tagName === 'BUTTON' && e.code !== 'KeyE') return;
-    if (!$('#bench').hidden && advance) { e.preventDefault(); advance(); }
+    if (document.activeElement && document.activeElement.tagName === 'BUTTON' && document.activeElement.id !== 'howtoGo' && e.code !== 'KeyE') return;
+    if (!$('#howto').hidden) { e.preventDefault(); $('#howtoGo').click(); }
+    else if (!$('#bench').hidden && advance) { e.preventDefault(); advance(); }
     else if (!$('#map').hidden && $('#ask').hidden) { e.preventDefault(); act(); }
     else if (!$('#end').hidden && endAdvance) { e.preventDefault(); endAdvance(); }
   }

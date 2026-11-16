@@ -65,6 +65,10 @@ async function finishTutorial(page: Page, kick: boolean): Promise<void> {
   await talk(page);
   await expect(game(page)).toHaveAttribute('data-screen', 'map');
   await expect(game(page)).toHaveAttribute('data-explore', '0');
+  // 探索の説明（やること・操作）が出るので、読んで閉じる
+  await expect(page.getByRole('heading', { name: '夜の街の中を探索しよう' })).toBeVisible();
+  await page.getByRole('button', { name: '探索をはじめる' }).click();
+  await expect(page.locator('#howto')).toBeHidden();
 }
 
 async function placeAll(page: Page, center?: string): Promise<void> {
@@ -84,7 +88,7 @@ async function placeAll(page: Page, center?: string): Promise<void> {
 
 async function readEnding(page: Page): Promise<void> {
   await expect(game(page)).toHaveAttribute('data-screen', 'end', { timeout: 15000 });
-  const back = page.getByRole('button', { name: 'タイトルへ' }).last();
+  const back = page.locator('#back');
   for (let i = 0; i < 8 && !(await page.locator('#end .after').isVisible()); i++) { await page.keyboard.press('Enter'); await page.waitForTimeout(150); }
   await expect(back).toBeVisible();
 }
@@ -152,7 +156,7 @@ test('PC: title, intro, tutorial, nine pieces in the residential area and park, 
   await readEnding(page);
   await expect(game(page)).toHaveAttribute('data-end', 'E01');
   await shot(page, 'end1');
-  await page.getByRole('button', { name: 'タイトルへ' }).last().click();
+  await page.locator('#back').click();
   await page.getByRole('button', { name: 'エンド一覧' }).click();
   await expect(page.locator('#bookList')).toContainText('昼の足音');
   await expect(page.locator('#bookList li', { hasText: '？？？' })).toHaveCount(5);
@@ -260,6 +264,8 @@ test.describe('phone landscape', () => {
     await shot(page, 'phone-bench');
     for (let i = 0; i < 30 && (await game(page).getAttribute('data-screen')) === 'bench'; i++) { await page.locator('#bench').tap({ position: { x: 420, y: 60 } }); await page.waitForTimeout(80); }
     await expect(game(page)).toHaveAttribute('data-screen', 'map');
+    await shot(page, 'phone-howto');
+    await page.getByRole('button', { name: '探索をはじめる' }).tap();
     await hold('#tr', async () => (await px(page)) >= 400);
     await page.getByRole('button', { name: '調べる' }).tap();
     await page.locator('#ask .choice').first().tap();
