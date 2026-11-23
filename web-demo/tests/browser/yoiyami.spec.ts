@@ -100,7 +100,7 @@ test('PC: title, intro, tutorial, nine pieces in the residential area and park, 
   const errors = watchErrors(page);
   await page.goto(URL);
   await expect(page.getByRole('heading', { name: /よいやみ/ })).toBeVisible();
-  await expect(page.locator('#version')).toHaveText(/^v\d+\.\d+ .+　更新日 \d{4}-\d{2}-\d{2}$/);
+  await expect(page.locator('#version')).toHaveText(/^v\d+(\.\d+)+ .+　更新日 \d{4}-\d{2}-\d{2}$/);
   await shot(page, 'title');
   await page.getByRole('button', { name: 'はじめから' }).click();
   await page.waitForTimeout(2600);
@@ -336,7 +336,7 @@ test('dev report: the button opens a form, typing does not move yoiyami, the cop
   const text = await page.evaluate(() => navigator.clipboard.readText());
   expect(text).toContain('【よいやみ こうした方がいい】');
   expect(text).toContain('ddd aaa テスト');
-  expect(text).toMatch(/版: v\d+\.\d+ /);
+  expect(text).toMatch(/版: v\d+(\.\d+)+ /);
   expect(text).toContain('画面: 探索（チュートリアル・住宅街');
   await shot(page, 'report');
   await page.getByRole('button', { name: '閉じる' }).click();

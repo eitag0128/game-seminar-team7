@@ -23,14 +23,14 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 .stage { position: absolute; left: 50%; bottom: 0; width: 1280px; height: 720px; margin-left: -640px; transform-origin: 50% 100%; transform: scale(var(--s)); }
 .stage svg.bg { position: absolute; inset: 0; }
 /* よいやみは 64×64 のドット絵（11/19 山口さんのドット絵と同じ粗さ）。拡大しても滲ませない。 */
-.sprite { position: absolute; width: 150px; height: 150px; margin-left: -75px; pointer-events: none; image-rendering: pixelated; }
+.sprite { position: absolute; width: 150px; height: 150px; margin-left: -75px; pointer-events: none; image-rendering: pixelated; transform-origin: 50% 96%; }
 .bldg { position: absolute; bottom: 200px; image-rendering: pixelated; pointer-events: none; }
 
 /* ベンチ */
 #bench.dawn { background: linear-gradient(#35409f 0%, #b98bc4 55%, #ffc9a8 100%); transition: background 2.5s; }
 #bench .lampglow .lit { transition: opacity 2.5s; }
 #bench.dawn .lampglow .lit { opacity: 0; }
-#benchYoi { bottom: 196px; left: 1500px; transition: left 1.6s cubic-bezier(.2,.7,.3,1); }
+#benchYoi { bottom: 196px; left: 1500px; transition: left 1.6s linear; }
 #log { position: absolute; left: 50%; bottom: calc(430px * var(--s)); width: min(540px, 92vw); transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
 .msg { max-width: 84%; padding: 9px 15px; border-radius: 16px; font-size: clamp(14px, 2.2vmin + 6px, 17px); line-height: 1.6; animation: up 0.35s ease-out; transition: opacity 0.5s; box-shadow: 0 2px 0 #0a0f6e55; }
 .msg.girl { align-self: flex-start; background: var(--paper); color: #1d1b33; border-bottom-left-radius: 3px; }
@@ -96,7 +96,8 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 #pieces span { width: 15px; height: 19px; background: #ffffff22; clip-path: polygon(0 8%, 60% 0, 100% 22%, 92% 100%, 18% 92%); }
 #pieces .a-day { background: #ffc37a; } #pieces .a-night { background: #9db4ff; } #pieces .a-lamp { background: #f4efe6; } #pieces .a-special { background: #ff8f8a; }
 #bagList { position: absolute; top: 62px; right: 14px; margin: 0; padding: 10px 14px; list-style: none; background: #0a0f6eee; border-radius: 4px; font-size: 14px; line-height: 1.9; text-align: right; }
-@media (max-width: 640px) { #hud { top: 46px; } #bagList { top: 96px !important; } }
+@media (max-width: 960px) { #hud { top: 60px; } #bagList { top: 112px !important; } }
+@media (max-width: 520px) { .pill { padding: 8px 11px; font-size: 14px; } #hud { top: 108px; } #bagList { top: 160px !important; } }
 #hint { position: absolute; left: 50%; bottom: calc(96px * var(--s) + 8px); transform: translateX(-50%); margin: 0; padding: 6px 14px; border-radius: 16px; background: #0a0f6ecc; font-size: clamp(13px, 2.4vmin, 16px); white-space: nowrap; pointer-events: none; }
 #hint b { color: #ffe38a; font-weight: 700; }
 #hint kbd { font: inherit; font-size: 0.85em; border: 1px solid #ffffff66; border-radius: 3px; padding: 0 5px; margin-left: 8px; }
@@ -160,8 +161,9 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 @media (max-height: 460px) { #report .note { display: none; } #report textarea { min-height: 64px; } #report pre { max-height: 60px; } }
 
 /* 上のボタン */
-#top { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 9; }
-.pill { background: #0a0f6ecc; border: 1px solid #ffffff55; border-radius: 16px; padding: 4px 12px; font-size: 12px; }
+#top { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 9; max-width: calc(100vw - 16px); flex-wrap: wrap; justify-content: center; }
+.pill { min-height: 42px; background: #0a0f6ecc; border: 1px solid #ffffff77; border-radius: 22px; padding: 8px 16px; font-size: 15px; line-height: 1.4; }
+.pill:hover { background: #2233c8; }
 
 /* コラージュ */
 #collage { background: #20184a; display: grid; grid-template-columns: auto auto; align-content: center; justify-content: center; align-items: center; gap: clamp(14px, 4vw, 44px); padding: 44px 14px 14px; }
@@ -283,7 +285,8 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 'use strict';
 // 版の名前と更新日。更新したらここを書き換える（タイトルと画面右下に出る）。
 // v0.1 α版 2026-11-12 / v0.2 中間発表版 2026-11-16（11/16 遊びやすさの案内を追加）/ v0.3 ドット絵版 2026-11-23
-const VERSION = { name: 'v0.3 ドット絵版', date: '2026-11-23' };
+// v0.3.1 2026-11-23: 歩く時に跳ねる動き、ベンチで歩いて登場、上のボタンを大きく
+const VERSION = { name: 'v0.3.1 ドット絵版', date: '2026-11-23' };
 document.getElementById('version').textContent = VERSION.name + '　更新日 ' + VERSION.date;
 document.getElementById('tag').textContent = 'よいやみ ' + VERSION.name + '（' + VERSION.date + '）· 仮素材';
 // ===================================================================================================
@@ -544,14 +547,14 @@ function benchReset(dawn = false) { log.innerHTML = ''; choices.innerHTML = ''; 
 
 function title() {
   scene++; reset(); benchReset(); setMurmur(0);
-  $('#titleUI').hidden = false; $('#benchYoi').style.left = '1500px';
+  $('#titleUI').hidden = false; $('#benchYoi').style.transition = 'none'; $('#benchYoi').style.left = '1500px'; void $('#benchYoi').offsetWidth; $('#benchYoi').style.transition = '';
   show('bench'); game.dataset.screen = 'title'; setTop({ title: false });
 }
 // 序章（企画書 1-7 の ①〜㉔。台詞は企画書のまま）
 async function intro() {
   const my = ++scene; reset(); benchReset(); show('bench'); setTop({ skip: true });
-  const yoi = $('#benchYoi'); yoi.style.left = '1500px'; await wait(500); if (my !== scene) return;
-  yoi.style.left = '1010px'; await wait(1700);
+  const yoi = $('#benchYoi'); yoi.style.transition = 'none'; yoi.style.left = '1500px'; void yoi.offsetWidth; yoi.style.transition = ''; await wait(500); if (my !== scene) return;
+  benchWalkTo(1010); await wait(1700);
   if (!await lines(my, [['girl', 'こんばんは'], ['yoi', '何しているの'], ['girl', 'ここで街の様子を見ているの'], ['girl', '夜の街って落ち着いた感じがするでしょう。でも実は結構いろんなことが起こるんだよ'], ['girl', '例えば＿＿＿']])) return;
   await canCut(my); if (my !== scene) return;
   if (!await lines(my, [['girl', 'ほら誰かが捨てた空き缶'], ['girl', 'ああいうのを眺めるんだ'], ['yoi', '捨てないの？'], ['girl', '捨てる？私が？'], ['girl', '考えたこともなかった'], ['girl', '君にとって私は街中でゴミ拾いするような女の子なの？']])) return;
@@ -575,6 +578,40 @@ async function canCut(my) {
 // ===================================================================================================
 // 探索。横に長いマップを歩き、物に近づいて調べる（企画書 1-7 の 2〜3）。
 // ===================================================================================================
+let wasMoving = false;
+// よいやみの絵と動き。走りの絵2枚は髪の先しか違わず足が動かないので（11/16 山口さん「もっとぴょこぴょこさせなきゃ」）、
+// 1枚ごとに1歩ずつ小さく跳ねさせ、着地で少し縮める。待機はゆっくり息をする。
+// step: 1歩の秒数（0 なら待機）、right: 右へ進む時は左向きの絵を反転する。
+const RUN_LIFT = 4.7; // 走りの絵は足元が待機より2マス高いので、その分下げる
+function poseSprite(el, t, step, right) {
+  let frame, y = 0, sx = 1, sy = 1;
+  if (step) {
+    const n = Math.floor(t / step), phase = (t % step) / step, hop = Math.sin(phase * Math.PI);
+    frame = IMG.run[n % IMG.run.length];
+    y = RUN_LIFT - hop * 9;
+    sy = 1 - (1 - hop) * 0.06; sx = 1 + (1 - hop) * 0.04;
+  } else {
+    frame = IMG.idle[Math.floor(t / 0.6) % IMG.idle.length];
+    sy = 1 + Math.sin(t * 2.4) * 0.015;
+  }
+  if (el.dataset.frame !== frame) { el.src = frame; el.dataset.frame = frame; }
+  el.style.transform = `translateY(${y.toFixed(1)}px) scale(${(right ? -sx : sx).toFixed(3)}, ${sy.toFixed(3)})`;
+}
+// ベンチのよいやみ: left を変えると、移動の間は歩き、着いたら待機に戻る。
+let benchMoveUntil = 0, benchT0 = performance.now();
+function benchWalkTo(x) {
+  const el = $('#benchYoi');
+  if (el.style.left === x + 'px') return;
+  el.style.left = x + 'px';
+  benchMoveUntil = performance.now() + 1600; benchT0 = performance.now();
+}
+function benchLoop(now) {
+  requestAnimationFrame(benchLoop);
+  if ($('#bench').hidden) return;
+  const el = $('#benchYoi'), moving = now < benchMoveUntil;
+  poseSprite(el, (now - benchT0) / 1000, moving ? 0.2 : 0, false);
+}
+requestAnimationFrame(benchLoop);
 let mapId = 'residential', px = 200, facing = -1, tutorialMode = false, cutscene = false, busy = false, near = null, last = 0, animT = 0, stepT = 0;
 const keys = new Set(), world = $('#world'), far = $('#far');
 const tutorialList = [{ id: 'CAN', x: 700, name: '空き缶' }, { id: 'BIN', x: 1500, name: 'ゴミ箱' }];
@@ -635,10 +672,10 @@ function loop(t) {
   const player = $('#player');
   if (player) {
     animT += dt;
-    const frames = dir ? IMG.run : IMG.idle, frame = frames[Math.floor(animT / (dir ? (running ? 0.11 : 0.17) : 0.42)) % frames.length];
-    if (player.dataset.frame !== frame) { player.src = frame; player.dataset.frame = frame; }
+    if (dir && !wasMoving) animT = 0; // 歩き出しは1歩目から
+    wasMoving = !!dir;
     player.style.left = px + 'px';
-    player.style.transform = `translateY(${dir ? 7 : 0}px) scaleX(${dir > 0 ? -1 : 1})`;
+    poseSprite(player, animT, dir ? (running ? 0.13 : 0.2) : 0, dir > 0);
     if (dir) { stepT += dt; if (stepT > (running ? 0.2 : 0.32)) { stepT = 0; se('step', 0.3); } } else stepT = 0.2;
   }
   const vw = innerWidth, cam = Math.max(0, Math.min(px * s - vw / 2, m.width * s - vw));
@@ -788,7 +825,7 @@ async function tutorialPiece([name, attr]) {
   store('yoiyami-pieces', name); se('get', 0.5); flash(); toast(`「${name}」の紙片を手に入れた！`, attr);
   await wait(2500); if (my !== scene) return;
   busy = false; tutorialMode = false; f.carry = false;
-  benchReset(); show('bench'); $('#benchYoi').style.left = '1010px';
+  benchReset(); show('bench'); benchWalkTo(1010);
   if (!await lines(my, [['girl', 'おかえり'], ['girl', 'なにか見つけたみたいだね'], ['yoi', `（${name}の破片を渡す）`], ['girl', 'へぇ、これが君からみた私なんだ'], ['girl', 'でも、きっと私ってこれだけじゃないよね'], ['girl', 'お願いがあるんだけど聞いてくれる？'], ['girl', 'もっと街の中を見て、私の性格を教えてほしいんだ'], ['girl', '私じゃ私が何者なのか、全くわからないからさ'], ['girl', 'おねがいね']])) return;
   enterMap('residential');
   showHowto();
@@ -803,7 +840,7 @@ $('#howtoGo').onclick = () => { $('#howto').hidden = true; busy = false; se('sel
 // コラージュとエンド判定（企画書 2-4、2-5）
 // ===================================================================================================
 async function collageTalk() {
-  const my = ++scene; busy = false; setMurmur(0); benchReset(true); show('bench'); setTop({}); $('#benchYoi').style.left = '1010px';
+  const my = ++scene; busy = false; setMurmur(0); benchReset(true); show('bench'); setTop({}); benchWalkTo(1010);
   if (!await lines(my, [['girl', 'おかえり'], ['girl', 'もう日も昇ってきたし、そろそろ帰らないと'], ['girl', '私の性格いいのが見つかった？']])) return;
   collage();
 }
