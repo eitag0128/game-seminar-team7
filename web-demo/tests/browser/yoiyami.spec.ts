@@ -27,6 +27,8 @@ async function talk(page: Page, pick = 0): Promise<void> {
 }
 
 async function walkTo(page: Page, x: number, run = true): Promise<void> {
+  // 場所を移った直後は、位置の表示が次の描画まで古いことがあるので1回待つ
+  await page.waitForTimeout(80);
   const from = await px(page);
   if (Math.abs(from - x) < 40) return;
   const key = from < x ? 'ArrowRight' : 'ArrowLeft';
@@ -41,7 +43,7 @@ async function walkTo(page: Page, x: number, run = true): Promise<void> {
 async function inspect(page: Page, x: number, option = 0): Promise<void> {
   await walkTo(page, x);
   await page.keyboard.press('Enter');
-  await page.locator('#ask .choice').nth(option).click();
+  await page.locator('#ask .choice').nth(option).click({ timeout: 15000 });
   await page.waitForTimeout(250);
 }
 
@@ -98,6 +100,7 @@ test('PC: title, intro, tutorial, nine pieces in the residential area and park, 
   const errors = watchErrors(page);
   await page.goto(URL);
   await expect(page.getByRole('heading', { name: /よいやみ/ })).toBeVisible();
+  await expect(page.locator('#version')).toHaveText(/^v\d+\.\d+ .+　更新日 \d{4}-\d{2}-\d{2}$/);
   await shot(page, 'title');
   await page.getByRole('button', { name: 'はじめから' }).click();
   await page.waitForTimeout(2600);
@@ -316,4 +319,29 @@ test('collage: drag a piece onto a square, drag between squares to swap', async 
   await expect(page.locator('.slot.center')).toContainText('誠実');
   await expect(page.locator('.slot[data-slot="0"]')).toContainText('図書館');
   await shot(page, 'collage-drag');
+});
+
+test('dev report: the button opens a form, typing does not move yoiyami, the copied text has the state', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await skipToTutorial(page);
+  await page.getByRole('button', { name: '意見・バグ' }).click();
+  await expect(page.getByRole('dialog', { name: '意見・バグを書く（開発用）' })).toBeVisible();
+  const before = await px(page);
+  await page.locator('#reportText').fill('');
+  await page.locator('#reportText').pressSequentially('ddd aaa テスト');
+  expect(await px(page)).toBe(before);
+  await page.getByLabel('こうした方がいい').check();
+  await page.getByRole('button', { name: 'コピーする' }).click();
+  await expect(page.locator('#reportDone')).toHaveText('コピーしました。Discord に貼ってください。');
+  const text = await page.evaluate(() => navigator.clipboard.readText());
+  expect(text).toContain('【よいやみ こうした方がいい】');
+  expect(text).toContain('ddd aaa テスト');
+  expect(text).toMatch(/版: v\d+\.\d+ /);
+  expect(text).toContain('画面: 探索（チュートリアル・住宅街');
+  await shot(page, 'report');
+  await page.getByRole('button', { name: '閉じる' }).click();
+  await expect(page.locator('#report')).toBeHidden();
+  await page.keyboard.down('ArrowRight');
+  await expect.poll(() => px(page)).toBeGreaterThan(before + 50);
+  await page.keyboard.up('ArrowRight');
 });

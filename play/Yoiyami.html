@@ -48,7 +48,8 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 #titleUI { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr; align-content: center; justify-items: start; padding-left: clamp(24px, 9vw, 130px); background: linear-gradient(90deg, #0a0f6ef2 0%, #0a0f6ed9 30%, #0a0f6e55 48%, transparent 64%); }
 #titleUI h1 { margin: 0; font-size: clamp(54px, 13vmin, 112px); font-weight: 700; letter-spacing: 0.08em; line-height: 1.05; }
 #titleUI h1 span { display: block; font-size: 0.16em; font-weight: 400; letter-spacing: 0.5em; color: var(--dim); margin: 0 0 0.6em 0.3em; }
-#titleUI .lead { margin: 14px 0 26px 4px; font-size: clamp(13px, 2.2vmin, 16px); line-height: 1.9; color: #dfe3ff; }
+#titleUI .version { margin: 0 0 22px 4px; font-size: 13px; color: #ffe38a; letter-spacing: 0.04em; }
+#titleUI .lead { margin: 14px 0 10px 4px; font-size: clamp(13px, 2.2vmin, 16px); line-height: 1.9; color: #dfe3ff; }
 #titleUI nav { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 .menu { background: none; border: 0; padding: 7px 4px; font-size: clamp(16px, 3vmin, 20px); }
 .menu::before { content: '　'; }
@@ -145,6 +146,19 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 #collageStep { margin: 0; padding: 8px 12px; background: #ffffff14; border-left: 3px solid #ffe38a; font-size: 14px; color: #fff; line-height: 1.6; }
 #end .tapnext { margin: 2px 0 0; font-size: 12px; color: #8c8ca0; }
 
+/* 開発用: 意見・バグの報告（書いた内容に今の状態を付けてコピーし、Discord に貼ってもらう） */
+#report { position: absolute; inset: 0; z-index: 25; display: grid; place-items: center; padding: 12px; background: #0a0f6ecc; }
+#report .card { width: min(560px, 100%); max-height: 100%; overflow: auto; padding: 18px 20px; background: var(--paper); color: #1d1b33; border-radius: 4px; }
+#report h2 { margin: 0 0 6px; font-size: 18px; }
+#report .note { margin: 0 0 10px; font-size: 13px; line-height: 1.7; color: #4a4766; }
+#report .kinds { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 8px; font-size: 14px; }
+#report textarea { width: 100%; min-height: 96px; padding: 8px 10px; border: 1px solid #1d1b3355; border-radius: 3px; font: inherit; font-size: 15px; resize: vertical; }
+#report pre { margin: 8px 0 0; padding: 8px 10px; max-height: 110px; overflow: auto; background: #1d1b330d; border-radius: 3px; font: 12px/1.6 ui-monospace, Consolas, monospace; white-space: pre-wrap; }
+#report .row { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 12px; }
+#report .done { margin-right: auto; font-size: 13px; color: #c8322c; }
+#report .plain { background: none; border: 0; color: #4a4766; padding: 8px; }
+@media (max-height: 460px) { #report .note { display: none; } #report textarea { min-height: 64px; } #report pre { max-height: 60px; } }
+
 /* 上のボタン */
 #top { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 9; }
 .pill { background: #0a0f6ecc; border: 1px solid #ffffff55; border-radius: 16px; padding: 4px 12px; font-size: 12px; }
@@ -205,6 +219,7 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
       <div>
         <h1><span>YOIYAMI</span>よいやみ</h1>
         <p class="lead">夜、一人でベンチに座る少女のために街を歩く。<br>選んだ紙片で、彼女の「これから」が変わる。</p>
+        <p class="version" id="version"></p>
         <nav>
           <button class="menu" id="start">はじめから</button>
           <button class="menu" id="openEnds">エンド一覧</button>
@@ -251,13 +266,26 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
     </div>
   </section>
   <section id="end" class="screen" hidden></section>
-  <div id="top"><button class="pill" id="sound" aria-pressed="true">音 オン</button><button class="pill" id="skip" hidden>会話を飛ばす</button><button class="pill" id="help" hidden>遊び方</button><button class="pill" id="toTitle" hidden>タイトルへ</button></div>
+  <div id="top"><button class="pill" id="sound" aria-pressed="true">音 オン</button><button class="pill" id="skip" hidden>会話を飛ばす</button><button class="pill" id="help" hidden>遊び方</button><button class="pill" id="toTitle" hidden>タイトルへ</button><button class="pill" id="openReport">意見・バグ</button></div>
+  <div id="report" hidden><div class="card" role="dialog" aria-labelledby="reportTitle">
+    <h2 id="reportTitle">意見・バグを書く（開発用）</h2>
+    <p class="note">気づいたことを書いて「コピーする」を押し、Discord の報告用チャンネルに貼ってください。今の画面・場所・持っている紙片などは自動で付きます。ゲームは止まっているので、閉じれば続きから遊べます。</p>
+    <div class="kinds"><label><input type="radio" name="kind" value="バグ" checked> バグ</label><label><input type="radio" name="kind" value="こうした方がいい"> こうした方がいい</label><label><input type="radio" name="kind" value="その他"> その他</label></div>
+    <textarea id="reportText" placeholder="例：公園の看板の近くで調べるボタンが出なかった"></textarea>
+    <pre id="reportInfo"></pre>
+    <div class="row"><span class="done" id="reportDone"></span><button class="plain" id="reportClose">閉じる</button><button class="choice" id="reportCopy">コピーする</button></div>
+  </div></div>
   <div id="flash"></div>
   <div id="book" hidden><div class="inner"><h2 id="bookTitle"></h2><ul id="bookList"></ul><button class="choice" id="closeBook">閉じる</button></div></div>
-  <span class="tag">よいやみ 中間発表版 · 仮素材</span>
+  <span class="tag" id="tag"></span>
 </div>
 <script>
 'use strict';
+// 版の名前と更新日。更新したらここを書き換える（タイトルと画面右下に出る）。
+// v0.1 α版 2026-11-12 / v0.2 中間発表版 2026-11-16（11/16 遊びやすさの案内を追加）/ v0.3 ドット絵版 2026-11-23
+const VERSION = { name: 'v0.3 ドット絵版', date: '2026-11-23' };
+document.getElementById('version').textContent = VERSION.name + '　更新日 ' + VERSION.date;
+document.getElementById('tag').textContent = 'よいやみ ' + VERSION.name + '（' + VERSION.date + '）· 仮素材';
 // ===================================================================================================
 // データ。企画書「よいやみ 企画書・ゲーム詳細設計」（2026-11-09 ときとまる）の 1-7、2-4、2-5 より。
 // 属性: day=昼(+1) night=夜(-1) lamp=灯(0) special=特殊(0、中央に置いた時だけ特殊エンド)。
@@ -895,12 +923,60 @@ $('#toTitle').onclick = () => {
 $('#help').onclick = () => showHowto();
 
 // ===================================================================================================
+// 開発用: 意見・バグの報告。サーバーがないので、書いた内容に今の状態を付けた文をコピーし、Discord に貼ってもらう。
+// ===================================================================================================
+const SCREEN_NAMES = { title: 'タイトル', bench: 'ベンチ（会話）', map: '探索', collage: 'コラージュ', end: 'エンド' };
+let reportWasBusy = false;
+function reportInfo() {
+  const screen = game.dataset.screen, lines = [`版: ${VERSION.name}（${VERSION.date}）`];
+  let where = SCREEN_NAMES[screen] || screen;
+  if (screen === 'map') where += `（${tutorialMode ? 'チュートリアル・' : ''}${MAPS[mapId].name}、x=${Math.round(px)}${near ? '、近く: ' + near.name : ''}）`;
+  if (screen === 'end') where += `（${game.dataset.end} ${ENDS[game.dataset.end]?.name || ''}）`;
+  lines.push(`画面: ${where}`);
+  if (screen !== 'title') lines.push(`紙片: ${f.explore} / ${MAX_EXPLORE}${f.hand.length ? '（' + f.hand.map((p) => p.name).join('、') + '）' : ''}`);
+  lines.push(`操作: ${game.dataset.input === 'touch' ? 'タッチ' : 'キーボード・マウス'} / 画面 ${innerWidth}×${innerHeight}`);
+  const ua = navigator.userAgent, browser = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'その他';
+  const os = /iPhone|iPad/.test(ua) ? 'iOS' : /Android/.test(ua) ? 'Android' : /Mac OS X/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : 'その他';
+  lines.push(`環境: ${browser} / ${os}${location.protocol === 'file:' ? ' / ダブルクリック版' : ''}`);
+  const d = new Date(), z = (n) => String(n).padStart(2, '0');
+  lines.push(`日時: ${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`);
+  return lines.join('\n');
+}
+function openReport() {
+  reportWasBusy = busy; busy = true; keys.clear();
+  $('#reportInfo').textContent = reportInfo();
+  $('#reportDone').textContent = '';
+  $('#report').hidden = false;
+  $('#reportText').focus();
+}
+function closeReport() { $('#report').hidden = true; busy = reportWasBusy; }
+async function copyReport() {
+  const kind = document.querySelector('#report input[name="kind"]:checked').value, body = $('#reportText').value.trim();
+  if (!body) { $('#reportDone').textContent = '内容を書いてください。'; $('#reportText').focus(); return; }
+  const text = `【よいやみ ${kind}】\n${body}\n---\n${$('#reportInfo').textContent}`;
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; } catch { /* file:// などで使えない時は下の方法 */ }
+  if (!ok) {
+    const area = document.createElement('textarea'); area.value = text; document.body.append(area); area.select();
+    try { ok = document.execCommand('copy'); } catch { ok = false; }
+    area.remove();
+  }
+  game.dataset.report = text;
+  if (ok) { $('#reportDone').textContent = 'コピーしました。Discord に貼ってください。'; $('#reportText').value = ''; }
+  else { $('#reportInfo').textContent = text; $('#reportDone').textContent = 'コピーできませんでした。下の文を選んでコピーしてください。'; }
+}
+$('#openReport').onclick = openReport;
+$('#reportClose').onclick = closeReport;
+$('#reportCopy').onclick = copyReport;
+
+// ===================================================================================================
 // 入力
 // ===================================================================================================
 function setInput(touch) { game.dataset.input = touch ? 'touch' : 'keys'; }
 setInput(matchMedia('(pointer: coarse)').matches);
 addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') setInput(true); }, true);
 addEventListener('keydown', (e) => {
+  if (!$('#report').hidden) { if (e.key === 'Escape') closeReport(); return; }
   if (e.code === 'ArrowLeft' || e.code === 'KeyA') { keys.add('l'); setInput(false); }
   if (e.code === 'ArrowRight' || e.code === 'KeyD') { keys.add('r'); setInput(false); }
   if (e.key === 'Shift') keys.add('run');
