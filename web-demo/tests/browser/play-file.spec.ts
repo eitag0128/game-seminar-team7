@@ -36,7 +36,7 @@ test('double-click file: yoiyami opens, the character art is embedded, the tutor
   await page.getByRole('button', { name: 'はじめから' }).click();
   await page.getByRole('button', { name: '会話を飛ばす' }).click();
   await expect(page.locator('#game')).toHaveAttribute('data-screen', 'map');
-  await expect.poll(() => page.locator('#player').evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(384);
+  await expect.poll(() => page.locator('#player').evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(64); // ドット絵（64×64）
   await page.keyboard.down('ArrowRight');
   await expect.poll(async () => Number(await page.locator('#game').getAttribute('data-px'))).toBeGreaterThan(400);
   await page.keyboard.up('ArrowRight');

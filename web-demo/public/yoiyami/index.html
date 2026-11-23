@@ -22,7 +22,9 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 /* 1280×720 で描いた場面を、画面の高さに合わせて拡大縮小する */
 .stage { position: absolute; left: 50%; bottom: 0; width: 1280px; height: 720px; margin-left: -640px; transform-origin: 50% 100%; transform: scale(var(--s)); }
 .stage svg.bg { position: absolute; inset: 0; }
-.sprite { position: absolute; width: 150px; height: 150px; margin-left: -75px; pointer-events: none; image-rendering: auto; }
+/* よいやみは 64×64 のドット絵（11/19 山口さんのドット絵と同じ粗さ）。拡大しても滲ませない。 */
+.sprite { position: absolute; width: 150px; height: 150px; margin-left: -75px; pointer-events: none; image-rendering: pixelated; }
+.bldg { position: absolute; bottom: 200px; image-rendering: pixelated; pointer-events: none; }
 
 /* ベンチ */
 #bench.dawn { background: linear-gradient(#35409f 0%, #b98bc4 55%, #ffc9a8 100%); transition: background 2.5s; }
@@ -155,7 +157,7 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 .slot { position: relative; border: 1.5px dashed #ffffff40; display: grid; place-items: stretch; }
 .slot.center { border-color: #ffe38a; border-style: solid; }
 .slot.ok { background: #ffffff18; }
-.piece { position: relative; width: 100%; height: 100%; min-height: 0; border: 0; padding: 4px; font-size: clamp(11px, 2vmin, 15px); font-weight: 700; line-height: 1.25; display: grid; place-items: center; text-align: center; color: #1d1b33; transform: rotate(var(--r, 0deg)); clip-path: polygon(2% 6%, 34% 0, 70% 4%, 100% 2%, 97% 40%, 100% 96%, 60% 100%, 28% 96%, 0 100%, 4% 52%); }
+.piece { touch-action: none; position: relative; width: 100%; height: 100%; min-height: 0; border: 0; padding: 4px; font-size: clamp(11px, 2vmin, 15px); font-weight: 700; line-height: 1.25; display: grid; place-items: center; text-align: center; color: #1d1b33; transform: rotate(var(--r, 0deg)); clip-path: polygon(2% 6%, 34% 0, 70% 4%, 100% 2%, 97% 40%, 100% 96%, 60% 100%, 28% 96%, 0 100%, 4% 52%); }
 .piece.a-day { background: linear-gradient(140deg, #ffd79a, #ffb062); }
 .piece.a-night { background: linear-gradient(140deg, #b9c8ff, #7f97f0); }
 .piece.a-lamp { background: linear-gradient(140deg, #fbf7ee, #ddd6c6); }
@@ -309,7 +311,10 @@ const ENDS = {
 const WEIGHT = [1, 2, 1, 2, 3, 2, 1, 2, 1];
 const SCORE = { day: 1, night: -1, lamp: 0, special: 0 };
 const MAX_EXPLORE = 9;
+// よいやみ: 11/16 の待機3枚（前の枝毛を消した版）と走り2枚を、ドット絵にしたもの（materials/yoiyami に元の絵）。
 const IMG = { idle: ['img/yoiyami-idle1.png', 'img/yoiyami-idle2.png', 'img/yoiyami-idle3.png', 'img/yoiyami-idle2.png'], run: ['img/yoiyami-run1.png', 'img/yoiyami-run2.png'] };
+// ビル: 11/20 山口さんの仮背景2種。1つずつ描いてもらい、プログラムで並べる（11/16 の相談どおり）。
+const BUILDINGS = [{ src: 'img/building-wide.png', w: 309, h: 366 }, { src: 'img/building-tall.png', w: 174, h: 371 }];
 const SE = { select: 'se/select.wav', step: 'se/step.wav', get: 'se/correct.wav', move: 'se/warp.wav' };
 
 // ===================================================================================================
@@ -330,6 +335,21 @@ function skyline(width, seed, base = 520) {
 function lampPost(x, gy = 520) {
   const t = gy - 270;
   return `<path d="M${x} ${gy}V${t}q0-26 26-26h22" fill="none" stroke="#2a3ad8" stroke-width="7"/><g class="lit"><rect x="${x + 36}" y="${t - 34}" width="46" height="14" rx="7" fill="${C.lamp}"/><path d="M${x + 44} ${t - 20}L${x - 70} ${gy}h260L${x + 74} ${t - 20}z" fill="${C.lamp}" opacity="0.13"/><ellipse cx="${x + 60}" cy="${gy + 2}" rx="130" ry="10" fill="${C.lamp}" opacity="0.18"/></g>`;
+}
+/** 山口さんのビルを、大きさと順番を変えながら並べる（地面 y=520 に下端を合わせる）。 */
+function buildingTiles(width, seed) {
+  const r = rng(seed); let out = '';
+  for (let x = 10; x < width - 60; ) {
+    const b = BUILDINGS[r() < 0.5 ? 0 : 1], k = 0.85 + r() * 0.45, w = Math.round(b.w * k);
+    out += `<img class="bldg" src="${b.src}" alt="" style="left:${x | 0}px;width:${w}px;height:${Math.round(b.h * k)}px">`;
+    x += w + 14 + r() * 40;
+  }
+  return out;
+}
+function poles(width) {
+  let out = '';
+  for (let x = 260; x < width; x += 760) out += `<path d="M${x} 520V110M${x - 46} 150h92M${x - 34} 184h68" stroke="${C.dark}" stroke-width="9" fill="none"/><path d="M${x - 46} 150q380 90 760 0M${x - 34} 184q380 70 760 0" stroke="${C.dark}" stroke-width="2" fill="none"/>`;
+  return out;
 }
 function houses(width, seed) {
   const r = rng(seed); let out = '';
@@ -353,7 +373,7 @@ function groundStreet(width) {
 }
 function tree(x, s = 1) { return `<g transform="translate(${x} 520) scale(${s})"><path d="M-9 0V-150h18V0z" fill="${C.dark}"/><circle cx="0" cy="-210" r="92" fill="${C.leaf}"/><circle cx="-62" cy="-160" r="62" fill="${C.leaf}"/><circle cx="66" cy="-166" r="66" fill="${C.leaf}"/><circle cx="-26" cy="-236" r="46" fill="${C.leaf2}" opacity="0.7"/><circle cx="44" cy="-200" r="34" fill="${C.leaf2}" opacity="0.5"/></g>`; }
 const BG = {
-  residential: (w) => ({ far: skyline(w, 7), near: houses(w, 31) + lampPost(1040) + lampPost(2380) + groundStreet(w) }),
+  residential: (w) => ({ far: skyline(w, 7), tiles: buildingTiles(w, 31), near: poles(w) + lampPost(1040) + lampPost(2380) + groundStreet(w) }),
   park: (w) => {
     let t = ''; const r = rng(99);
     for (let x = 120; x < w; x += 330 + r() * 180) t += tree(x, 0.8 + r() * 0.5);
@@ -398,8 +418,8 @@ const ART = {
 };
 // ベンチの場面。少女は座った後ろ姿だけで、顔は見せない（企画書「表情は見せない」）。
 function benchScene() {
-  return `<svg class="bg" width="1280" height="720" viewBox="0 0 1280 720">${skyline(1280, 12)}
-    <g opacity="0.9">${houses(1280, 77)}</g>
+  return `<svg class="bg" width="1280" height="720" viewBox="0 0 1280 720">
+    ${poles(1280)}
     <rect y="518" width="1280" height="202" fill="${C.walk}"/><rect y="518" width="1280" height="4" fill="${C.edge}"/><rect y="600" width="1280" height="120" fill="${C.road}"/>
     <g class="lampglow">${lampPost(520)}</g>
     <g transform="translate(560 404)">
@@ -478,7 +498,7 @@ renderSound();
 // 会話。吹き出しがチャットのように上へ流れて消える（企画書 2-6）。選択肢は赤い字。
 // ===================================================================================================
 const log = $('#log'), choices = $('#choices'), tap = $('#tap');
-$('#benchStage').innerHTML = benchScene() + `<img class="sprite" id="benchYoi" alt="よいやみ" src="${IMG.idle[0]}">`;
+$('#benchStage').innerHTML = `<svg class="bg" width="1280" height="720" viewBox="0 0 1280 720">${skyline(1280, 12)}</svg>` + buildingTiles(1280, 77) + benchScene() + `<img class="sprite" id="benchYoi" alt="よいやみ" src="${IMG.idle[0]}">`;
 function say(who, text) {
   [...log.children].forEach((m, i, all) => { m.className = m.className.replace(/ old(er)?/g, '') + (i < all.length - 1 ? ' older' : ' old'); });
   while (log.children.length > 3) log.firstChild.remove();
@@ -544,7 +564,7 @@ function buildMap() {
   const m = MAPS[mapId], bg = BG[mapId](m.width);
   far.style.width = world.style.width = m.width + 'px';
   far.innerHTML = `<svg width="${m.width}" height="720" viewBox="0 0 ${m.width} 720">${bg.far}</svg>`;
-  let html = `<svg class="bg" width="${m.width}" height="720" viewBox="0 0 ${m.width} 720">${bg.near}</svg>`;
+  let html = (bg.tiles || '') + `<svg class="bg" width="${m.width}" height="720" viewBox="0 0 ${m.width} 720">${bg.near}</svg>`;
   if (mapId === 'school' && !tutorialMode) for (const x of SHADOWS) html += `<svg class="shadow-kid" style="left:${x}px;animation-delay:-${x % 7 / 3}s" viewBox="0 0 70 190"><path d="M10 190V90q0-34 25-34t25 34v100z" fill="#000"/><circle cx="35" cy="30" r="24" fill="#000"/></svg>`;
   html += list().map(objHtml).join('');
   if (!tutorialMode) {
@@ -763,7 +783,7 @@ let picked = null;
 function collage() {
   scene++; f.slot = Array(9).fill(null); picked = null; show('collage'); setTop({});
   // 背面の文は配置の軽いヒント（企画書 2-4）。文面は仮。
-  $('#backText').textContent = '真ん中に置いたものが、いちばん強く残る。\nあたたかい色は外へ。つめたい色は内へ。\n赤い縁の紙片を真ん中に置くと、行き先が変わる。';
+  $('#backText').textContent = '真ん中ほど、その子の中心にある部分。端ほど、表に出ている部分。\nあたたかい色は外へ向かう心、つめたい色は内にこもる心。\n赤い縁の紙片を真ん中に置くと、行き先が変わる。';
   renderCollage();
 }
 function pieceHtml(i, where) { const p = f.hand[i], r = (p.name.charCodeAt(0) * 7 + i * 3) % 9 - 4; return `<button class="piece a-${p.attr}${picked === i ? ' picked' : ''}" data-${where}="${i}" style="--r:${r}deg">${p.name}</button>`; }
@@ -774,9 +794,42 @@ function renderCollage() {
   const empty = f.slot.filter((s) => s === null).length;
   $('#give').disabled = empty > 0;
   $('#collageStep').textContent = empty === 0 ? '9枚並べ終わりました。よければ「少女に渡す」を押してください。'
-    : picked === null ? `① 手元の紙片を1枚選ぶ（あと${empty}枚）` : '② 置きたいマスを選ぶ（真ん中がいちばん大事）';
+    : picked === null ? `① 手元の紙片を1枚選ぶ。マスまでドラッグしても置ける（あと${empty}枚）` : '② 置きたいマスを選ぶ（真ん中がいちばん大事）';
 }
+// ドラッグ: 紙片を押したまま動かして、マスの上で離すと置く（置いてあるマスなら入れ替わる）。
+let drag = null, dragged = false;
+$('#collage').addEventListener('pointerdown', (e) => {
+  const el = e.target.closest('[data-hand], [data-placed]');
+  if (!el) return;
+  drag = { el, index: Number(el.dataset.hand ?? el.dataset.placed), x: e.clientX, y: e.clientY, ghost: null };
+});
+addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  if (!drag.ghost && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 8) return;
+  if (!drag.ghost) {
+    const box = drag.el.getBoundingClientRect();
+    drag.ghost = drag.el.cloneNode(true);
+    Object.assign(drag.ghost.style, { position: 'fixed', zIndex: 30, width: box.width + 'px', height: box.height + 'px', pointerEvents: 'none', opacity: 0.9 });
+    document.body.append(drag.ghost); drag.el.style.opacity = 0.3;
+  }
+  drag.ghost.style.left = e.clientX - drag.ghost.offsetWidth / 2 + 'px';
+  drag.ghost.style.top = e.clientY - drag.ghost.offsetHeight / 2 + 'px';
+});
+addEventListener('pointerup', (e) => {
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (!d.ghost) return;
+  d.ghost.remove(); dragged = true;
+  const slot = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-slot]');
+  if (slot) {
+    const to = Number(slot.dataset.slot), from = f.slot.indexOf(d.index);
+    if (from >= 0) f.slot[from] = f.slot[to]; // 置いてあった紙片どうしは入れ替える
+    f.slot[to] = d.index; picked = null; se('step', 0.7);
+  }
+  renderCollage();
+});
 $('#collage').addEventListener('click', (e) => {
+  if (dragged) { dragged = false; return; }
   const hand = e.target.closest('[data-hand]'), placed = e.target.closest('[data-placed]'), slot = e.target.closest('[data-slot]');
   if (hand) { picked = picked === Number(hand.dataset.hand) ? null : Number(hand.dataset.hand); se('select', 0.4); return renderCollage(); }
   if (placed && picked === null) { f.slot[f.slot.indexOf(Number(placed.dataset.placed))] = null; se('select', 0.4); return renderCollage(); }

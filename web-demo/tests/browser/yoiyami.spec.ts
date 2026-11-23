@@ -294,3 +294,26 @@ test.describe('phone portrait', () => {
     await shot(page, 'portrait-collage');
   });
 });
+
+test('collage: drag a piece onto a square, drag between squares to swap', async ({ page }) => {
+  await page.goto(URL);
+  await page.evaluate(() => {
+    const state = (0, eval)('f') as { hand: unknown[] };
+    state.hand = ['誠実', '夢見がち', '律儀', '無邪気', '真面目', '根気強い', '図書館', '凝り性', 'ロマンチスト'].map((name, i) => ({ id: 'T' + i, name, attr: ['day', 'night', 'day', 'lamp', 'day', 'day', 'special', 'night', 'night'][i] }));
+    (0, eval)('collage()');
+  });
+  const dragTo = async (from: string, to: string) => {
+    const a = (await page.locator(from).boundingBox())!, b = (await page.locator(to).boundingBox())!;
+    await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 10 });
+    await page.mouse.up();
+  };
+  await dragTo('#hand .piece >> text=図書館', '.slot.center');
+  await expect(page.locator('.slot.center')).toContainText('図書館');
+  await dragTo('#hand .piece >> text=誠実', '.slot[data-slot="0"]');
+  await dragTo('.slot[data-slot="0"] .piece', '.slot.center');
+  await expect(page.locator('.slot.center')).toContainText('誠実');
+  await expect(page.locator('.slot[data-slot="0"]')).toContainText('図書館');
+  await shot(page, 'collage-drag');
+});
