@@ -332,7 +332,7 @@ test('dev report: the button opens a form, typing does not move yoiyami, the cop
   expect(await px(page)).toBe(before);
   await page.getByLabel('こうした方がいい').check();
   await page.getByRole('button', { name: 'コピーする' }).click();
-  await expect(page.locator('#reportDone')).toHaveText('コピーしました。Discord に貼ってください。');
+  await expect(page.locator('#reportDone')).toHaveText('コピーしました。Discord の「team7_役職別連絡」→「プログラマー」に貼ってください。');
   const text = await page.evaluate(() => navigator.clipboard.readText());
   expect(text).toContain('【よいやみ こうした方がいい】');
   expect(text).toContain('ddd aaa テスト');

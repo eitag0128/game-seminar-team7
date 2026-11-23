@@ -269,7 +269,7 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
   <div id="top"><button class="pill" id="sound" aria-pressed="true">音 オン</button><button class="pill" id="skip" hidden>会話を飛ばす</button><button class="pill" id="help" hidden>遊び方</button><button class="pill" id="toTitle" hidden>タイトルへ</button><button class="pill" id="openReport">意見・バグ</button></div>
   <div id="report" hidden><div class="card" role="dialog" aria-labelledby="reportTitle">
     <h2 id="reportTitle">意見・バグを書く（開発用）</h2>
-    <p class="note">気づいたことを書いて「コピーする」を押し、Discord の報告用チャンネルに貼ってください。今の画面・場所・持っている紙片などは自動で付きます。ゲームは止まっているので、閉じれば続きから遊べます。</p>
+    <p class="note">気づいたことを書いて「コピーする」を押し、Discord の<b>「team7_役職別連絡」の「プログラマー」</b>に貼ってください。今の画面・場所・持っている紙片などは自動で付きます。ゲームは止まっているので、閉じれば続きから遊べます。</p>
     <div class="kinds"><label><input type="radio" name="kind" value="バグ" checked> バグ</label><label><input type="radio" name="kind" value="こうした方がいい"> こうした方がいい</label><label><input type="radio" name="kind" value="その他"> その他</label></div>
     <textarea id="reportText" placeholder="例：公園の看板の近くで調べるボタンが出なかった"></textarea>
     <pre id="reportInfo"></pre>
@@ -923,7 +923,7 @@ $('#toTitle').onclick = () => {
 $('#help').onclick = () => showHowto();
 
 // ===================================================================================================
-// 開発用: 意見・バグの報告。サーバーがないので、書いた内容に今の状態を付けた文をコピーし、Discord に貼ってもらう。
+// 開発用: 意見・バグの報告。サーバーがないので、書いた内容に今の状態を付けた文をコピーし、Discord の「team7_役職別連絡」→「プログラマー」に貼ってもらう（2026-11-23 本人の指定）。
 // ===================================================================================================
 const SCREEN_NAMES = { title: 'タイトル', bench: 'ベンチ（会話）', map: '探索', collage: 'コラージュ', end: 'エンド' };
 let reportWasBusy = false;
@@ -962,7 +962,7 @@ async function copyReport() {
     area.remove();
   }
   game.dataset.report = text;
-  if (ok) { $('#reportDone').textContent = 'コピーしました。Discord に貼ってください。'; $('#reportText').value = ''; }
+  if (ok) { $('#reportDone').textContent = 'コピーしました。Discord の「team7_役職別連絡」→「プログラマー」に貼ってください。'; $('#reportText').value = ''; }
   else { $('#reportInfo').textContent = text; $('#reportDone').textContent = 'コピーできませんでした。下の文を選んでコピーしてください。'; }
 }
 $('#openReport').onclick = openReport;
